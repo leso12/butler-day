@@ -4154,7 +4154,7 @@ function showLine(){
   const nm=gst?L.nm:who?(who===pid()?myName():CH[who].name):'';
   $('#dname').hidden=!nm;$('#dname').textContent=nm;
   if(L.s==='me')D.eL=L.e||'n';if(L.s==='npc')D.eR=L.e||'n';
-  const portrait=(S.mode==='portrait'&&!D.scene)||!!D.cine;
+  const portrait=(S.mode==='portrait')||!!D.cine;   /* 이벤트 중에도 초상화 + 이름표 대화창 (전신 일러스트 대신) */
   if(SCENE&&SCENE.extra&&(L.s==='npc'||L.s==='me'||L.s==='gst')){const nm2={};for(const id of ALL_IDS)nm2[CH[id].name]=id;const sid=L.s==='me'?null:L.s==='npc'?(L.w||D.who):nm2[L.nm];const sp=L.s==='me'?P:npcs.find(n=>n.id===sid);
     if(sp)for(const n of SCENE.extra){if(n===sp||n.cueMv||CUE.mv.some(m=>m.n===n))continue;const dx=sp.x-n.x,dy=sp.y-n.y;if(Math.hypot(dx,dy)<T*9)n.dir=Math.abs(dx)>Math.abs(dy)*1.3?(dx<0?2:3):(dy<0?1:0);}}   // 하객들이 말하는 사람을 바라봄
   if(SCENE&&L.e&&EMO[L.e]&&!D.noemo){const nm2={};for(const id of ALL_IDS)nm2[CH[id].name]=id;const sid=L.s==='me'?'me':L.s==='npc'?(L.w||D.who):L.s==='gst'?nm2[L.nm]:null;if(sid)SCENE.emo={id:sid,ch:EMO[L.e],t:performance.now()};}
