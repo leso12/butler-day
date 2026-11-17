@@ -24,7 +24,7 @@ function edWF(rm){const o=S&&S.roomWF&&S.roomWF[rm];return o||null;}
 #edbar .r{display:flex;gap:4px;flex-wrap:nowrap;align-items:center;justify-content:center;margin:3px 0}
 #edbar button{font:inherit;font-size:13px;min-height:40px;min-width:34px;padding:4px 6px;background:#fffaf1;border:2px solid #a8846a;color:#4a3426;border-radius:0}
 #edbar button.k{background:#5b4339;color:#f7efe2;border-color:#3a2a20}#edbar button:disabled{opacity:.4}
-#edbar .info{font-size:13px;text-align:center;min-height:18px}
+#edbar .info{font-size:13px;text-align:center;min-height:18px}#edbar .edtop{display:flex;align-items:center;gap:6px;margin-bottom:3px}#edbar .edtop b{font-size:15px}#edbar .pause{font-size:12px;background:#5b4339;color:#f7efe2;padding:2px 6px}#edbar .edtop button{min-height:34px;font-size:12.5px}#edbar button.big{flex:1.4;font-size:15px}#edbar #edsel.off button{opacity:.35}
 #edcat{position:fixed;left:6px;right:6px;top:60px;bottom:170px;z-index:61;background:#fffaf1;border:3px solid #a8846a;display:none;flex-direction:column;color:#4a3426}
 #edcat .tabs{display:flex;gap:4px;flex-wrap:nowrap;padding:5px 6px;border-bottom:1px solid #e2d2b8;overflow-x:auto;flex:none}#edcat .tabs button{flex:none}
 #edcat .tabs button{font:inherit;font-size:13px;color:#4a3426;padding:3px 8px;background:#f4ead8;border:1px solid #c9a77a}#edcat .tabs button.on{background:#5b4339;color:#fff}
@@ -34,9 +34,10 @@ function edWF(rm){const o=S&&S.roomWF&&S.roomWF[rm];return o||null;}
 #edcat .hd{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;font-weight:bold}#edcat .hd button{font:inherit;font-size:14px;color:#4a3426;min-width:64px;white-space:nowrap;min-height:34px;padding:2px 10px;border:2px solid #a8846a;background:#fffaf1}
 #edcat textarea{flex:1;margin:8px;font-size:11px;font-family:monospace}`;document.head.appendChild(st);
   const ov=document.createElement('canvas');ov.id='edov';document.body.appendChild(ov);
-  const bar=document.createElement('div');bar.id='edbar';bar.innerHTML=`<div class="info" id="edinfo">가구를 눌러 고르고, 빈 바닥을 누르면 그 자리로 옮겨요 · 화면을 끌면 둘러보기</div>
-<div class="r"><button data-e="L">◀</button><button data-e="U">▲</button><button data-e="D">▼</button><button data-e="R">▶</button><button data-e="dup">복제</button><button data-e="flip">반전</button><button data-e="rot">돌리기</button><button data-e="del">지우기</button></div>
-<div class="r"><button data-e="add" class="k">＋ 가구</button><button data-e="wall">벽지</button><button data-e="floor">바닥</button><button data-e="undo">되돌리기</button><button data-e="more">더보기</button><button data-e="done" class="k">저장·나가기</button></div>`;document.body.appendChild(bar);
+  const bar=document.createElement('div');bar.id='edbar';bar.innerHTML=`<div class="edtop"><b>꾸미기</b><span class="pause">⏸ 시간 멈춤</span><span style="flex:1"></span><button data-e="cancel">저장 안 하고 나가기</button><button data-e="done" class="k">저장하고 나가기</button></div>
+<div class="info" id="edinfo">가구를 눌러 고른 뒤 끌거나 빈 바닥을 눌러 옮겨요</div>
+<div class="r" id="edsel"><button data-e="L">◀</button><button data-e="U">▲</button><button data-e="D">▼</button><button data-e="R">▶</button><button data-e="dup">복제</button><button data-e="flip">반전</button><button data-e="rot">돌리기</button><button data-e="del">지우기</button></div>
+<div class="r"><button data-e="add" class="k big">＋ 가구 추가</button><button data-e="wall">벽지</button><button data-e="floor">바닥</button><button data-e="undo">되돌리기</button><button data-e="more">더보기</button></div>`;document.body.appendChild(bar);
   const cat=document.createElement('div');cat.id='edcat';document.body.appendChild(cat);
   bar.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;edCmd(b.dataset.e);});
   const cv=document.getElementById('game');let dn=null;
@@ -74,6 +75,7 @@ function edCmd(c){const a=ED.a;
   if(c==='more'){const el=document.getElementById('edcat');el.innerHTML=`<div class="hd"><span>더보기</span><button id="edcx">닫기</button></div><div class="tabs" style="max-height:none"><button data-m="reset">이 방 원래대로</button><button data-m="exp">내보내기 (원본 반영용)</button><button data-m="grid">격자 ${ED.nogrid?'켜기':'끄기'}</button></div><p style="padding:8px;font-size:13px;line-height:1.5">· 가구를 고른 뒤 손가락으로 끌면 옮겨져요<br>· 빈 곳을 끌면 화면이 움직여요<br>· 빨간 점선은 놓을 수 없는 자리예요 (벽·문 앞·겹침)<br>· 업무·이벤트용 가구는 옮길 수만 있어요</p>`;el.style.display='flex';el.querySelector('#edcx').onclick=()=>el.style.display='none';el.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{el.style.display='none';const m=b.dataset.m;if(m==='grid'){ED.nogrid=!ED.nogrid;return;}edCmd(m);});return;}
   if(c==='add')return edCatalog();if(c==='wall')return edSheet('w');if(c==='floor')return edSheet('f');if(c==='exp')return edExport();
   if(c==='reset'){const rm=edRoom(a,Math.floor(P.x/T),Math.floor((P.y-4)/T));if(!rm)return toast('방 안에서 눌러 주세요');if(!confirm(`«${rm[1]}»을 처음 배치로 되돌릴까요?`))return;edSnap();const orig=(a._orig0||a.objs).map(o=>({...o})),inR=o=>edRoom(a,o.x,o.y+o.h-1)===rm;a.objs=a.objs.filter(o=>!inR(o)).concat(orig.filter(inR));if(S.roomWF)delete S.roomWF[rm[0]];ED.sel=null;edCommit();toast('원래대로 되돌렸어요');return;}
+  if(c==='cancel'){if(!confirm('이번에 바꾼 것을 모두 버리고 나갈까요?'))return;return edCancel();}
   if(c==='done')return edExit();}
 /* 가구 목록: 보낸 가구 시트 전부(정의 파일 기준) + 게임 속 가구 */
 const FSETS=[['all','전체'],['recent','최근'],['game','게임 속'],['OW','고풍 저택'],['EV','빅토리아'],['OA','앤티크 침실'],['OB','기본 침실'],['VI','빈티지'],['VJ','보석 흑금'],['VJR','보석 루비'],['RX','로맨틱 정원'],['SV','기본 가구']];
@@ -120,10 +122,16 @@ function edExport(){const el=document.getElementById('edcat');const out={edits:{
   const ta=el.querySelector('textarea');ta.value=JSON.stringify(out);el.style.display='flex';el.querySelector('#edcx').onclick=()=>el.style.display='none';
   el.querySelector('#edcp').onclick=()=>{ta.select();try{navigator.clipboard.writeText(ta.value).then(()=>toast('복사했어요'),()=>{document.execCommand('copy');toast('복사했어요');});}catch(e){document.execCommand('copy');toast('복사했어요');}};}
 function edEnter(){const a=AREAS[S.area];if(!a||a.outdoor)return toast('실내에서만 꾸밀 수 있어요');if(D||SCENE)return;if(!a._orig0)a._orig0=a.objs.map(edClone);
-  ED.on=true;ED.a=a;ED.sel=null;ED.undo=[];ED.pp=[P.x,P.y];busy=true;ED.z=ZOOM;{const rm=edRoom(a,Math.floor(P.x/T),Math.floor((P.y-4)/T));ZOOM=0;resize();const sc0=SC,r=cv.getBoundingClientRect(),rw=rm?rm[4]+1:20,rh=rm?rm[5]+1:14;const want=Math.max(1,Math.min(sc0,Math.floor(Math.min(r.width/(rw*16),r.height/(rh*16+40)))));ZOOM=want-sc0;resize();if(rm){P.x=(rm[2]+rm[4]/2)*T;P.y=(rm[3]+rm[5]/2)*T+8;}}$('#panel').hidden=true;document.getElementById('edbar').style.display='block';edInfo('가구를 눌러 고른 뒤 끌거나 빈 바닥을 눌러 옮겨요 · 빈 곳을 끌면 둘러보기');}
+  ED.on=true;ED.a=a;ED.sel=null;ED.undo=[];ED.pp=[P.x,P.y];ED.snap=a.objs.map(edClone);ED.wfSnap=JSON.stringify(S.roomWF||{});busy=true;ED.z=ZOOM;{const rm=edRoom(a,Math.floor(P.x/T),Math.floor((P.y-4)/T));ZOOM=0;resize();const sc0=SC,r=cv.getBoundingClientRect(),rw=rm?rm[4]+1:20,rh=rm?rm[5]+1:14;const want=Math.max(1,Math.min(sc0,Math.floor(Math.min(r.width/(rw*16),r.height/(rh*16+40)))));ZOOM=want-sc0;resize();if(rm){P.x=(rm[2]+rm[4]/2)*T;P.y=(rm[3]+rm[5]/2)*T+8;}}$('#panel').hidden=true;document.getElementById('edbar').style.display='block';edInfo('가구를 눌러 고른 뒤 끌거나 빈 바닥을 눌러 옮겨요 · 빈 곳을 끌면 둘러보기');}
 function edExit(){const a=ED.a;S.edits=S.edits||{};S.edits[a.id]={v:Date.now(),objs:a.objs.map(edClone)};a._edv=S.edits[a.id].v;ED.on=false;ED.sel=null;busy=false;P.x=ED.pp[0];P.y=ED.pp[1];ZOOM=ED.z||0;resize();
   document.getElementById('edbar').style.display='none';document.getElementById('edcat').style.display='none';edBlk(a);buildArea(a);try{save();}catch(e){}toast('배치를 저장했어요');}
 /* 설정 창에 «방 꾸미기» 줄 */
 {const _tpE=togglePanel;togglePanel=function(kind,arg,keep){_tpE(kind,arg,keep);const p=$('#panel');if(!p||p.hidden||p.querySelector('#edgo'))return;const rows=[...p.querySelectorAll('.row')];const anchor=rows.find(r=>/글자 속도/.test(r.textContent));if(!anchor)return;
   anchor.insertAdjacentHTML('beforebegin',`<div class="row"><div><div class="tn">방 꾸미기</div><div class="tw">지금 있는 실내의 가구를 옮기고 벽지·바닥을 바꿔요</div></div><button class="pbtn" id="edgo">시작</button></div>`);p.querySelector('#edgo').onclick=()=>edEnter();};}
 setInterval(()=>{try{if(ED.on||typeof S==='undefined'||!S||!S.edits||!S.area)return;const a=AREAS[S.area];if(a&&!a.outdoor&&S.edits[a.id]&&a._edv!==S.edits[a.id].v)buildArea(a);}catch(e){}},1000);
+
+/* 저장 안 하고 나가기: 들어올 때 모습으로 되돌림 */
+function edCancel(){const a=ED.a;a.objs=ED.snap.map(o=>({...o}));S.roomWF=JSON.parse(ED.wfSnap||'{}');ED.on=false;ED.sel=null;busy=false;P.x=ED.pp[0];P.y=ED.pp[1];ZOOM=ED.z||0;resize();
+  document.getElementById('edbar').style.display='none';document.getElementById('edcat').style.display='none';edBlk(a);buildArea(a);toast('바꾼 것을 버리고 나왔어요');}
+/* 고른 가구가 없을 땐 가구 버튼들을 흐리게 */
+setInterval(()=>{const r=document.getElementById('edsel');if(r)r.classList.toggle('off',!ED.sel);},250);

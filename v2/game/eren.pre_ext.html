@@ -2042,12 +2042,13 @@ const REPT=()=>S.rep>=70?2:S.rep>=40?1:0, REPN=['미덥잖음','보통','신뢰'
 let MG=null;
 function mgOpen(o){MG=o;MG.t=0;$('#mg').hidden=false;o.init();}
 function mgClose(score){const o=MG;MG=null;$('#mg').hidden=true;o.done(score);}
-function mgTiming(title,desc,cb){
-  mgOpen({init(){this.pos=0;this.v=1.15;this.z=[.58,.80];this.pz=[.66,.72];
+function mgTiming(title,desc,cb,opt){const ez=opt&&opt.easy;
+  mgOpen({init(){this.pos=0;this.v=ez?.7:1.15;this.z=ez?[.5,.88]:[.58,.80];this.pz=ez?[.63,.75]:[.66,.72];this.tol=ez?.3:.2;
       $('#mg').innerHTML=`<h3>${title}<small>타이밍</small></h3><p>${desc}</p><div class="mbar"><div class="zone" style="left:${this.z[0]*100}%;width:${(this.z[1]-this.z[0])*100}%"></div><div class="zone p" style="left:${this.pz[0]*100}%;width:${(this.pz[1]-this.pz[0])*100}%"></div><div class="mk" id="mgk"></div></div><div class="mhint">진한 칸에서 [확인]</div>`;},
     tick(dt){this.pos+=this.v*dt;if(this.pos>1){this.pos=2-this.pos;this.v*=-1;}if(this.pos<0){this.pos=-this.pos;this.v*=-1;}$('#mgk').style.left=(this.pos*100)+'%';},
-    press(){const c=.69,d=Math.abs(this.pos-c);mgClose(Math.max(0,1-d/.2));},done:cb});
+    press(){const c=.69,d=Math.abs(this.pos-c);mgClose(Math.max(0,1-d/this.tol));},done:cb});
 }
+function mgTimingE(t,d,cb){return mgTiming(t,d,cb,{easy:1});}   /* 차 내기: 느린 바늘·넓은 칸 */
 function mgMash(title,desc,cb){
   mgOpen({init(){this.v=0;this.lim=6;
       $('#mg').innerHTML=`<h3>${title}<small>연타</small></h3><p>${desc}</p><div class="mbar"><div class="fillb" id="mgf"></div></div><div class="mtime"><i id="mgt"></i></div><div class="mhint">[확인]을 빠르게 연타</div>`;},
@@ -2085,7 +2086,7 @@ function workAt(tx,ty,o){
   if(it==='stove'){
     if(S.carry==='wood'&&task('wood')){S.carry=null;finishTask('wood',1);startDialog(null,[R_('화덕 옆에 장작을 차곡차곡 쌓았다. 팔이 저릿하다.')]);return true;}
     if(task('tea')&&!S.carry){if(!spend('tea'))return true;
-      mgTiming('차 내기','물이 끓기 직전에 주전자를 내려야 한다. 전하께서는 너무 뜨거운 차를 싫어하신다.',sc=>{S.carry='tea';S.teaQ=sc;
+      mgTimingE('차 내기','물이 끓기 직전에 주전자를 내려야 한다. 전하께서는 너무 뜨거운 차를 싫어하신다.',sc=>{S.carry='tea';S.teaQ=sc;
         startDialog(null,[R_(sc>=.85?'완벽한 온도다. 찻잎이 고르게 풀렸다.':sc>=.5?'나쁘지 않다. 이 정도면 괜찮겠지.':'…조금 애매하다. 그래도 식기 전에 가져가자.'),R_('찻쟁반을 들었다. 전하께 가져가자.')]);hud();});return true;}
   }
   if(it==='prep'&&task('silver')){if(!spend('silver'))return true;

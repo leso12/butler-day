@@ -19,10 +19,10 @@ setInterval(()=>{JWF++;const pb=document.getElementById('pbox');if(pb&&!pb.hidde
 (function(){const pb=document.getElementById('pbox'),pn=document.getElementById('pname');if(pb&&pn&&!document.getElementById('pjw')){const row=document.createElement('div');row.className='pnrow';pn.parentNode.insertBefore(row,pn);const c=document.createElement('canvas');c.id='pjw';c.className='jwl';c.width=11;c.height=11;row.appendChild(c);row.appendChild(pn);}
   const st=document.createElement('style');st.textContent=`#pbox{--pw:150px;width:var(--pw)!important;padding:4px!important;box-sizing:border-box}
 #pbox #pcv{width:100%!important;height:auto!important;aspect-ratio:1/1;display:block}
-#pbox .pnrow{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;padding:2px 6px 2px 3px;background:#5b4339;border:1px solid #c9a77a}
+#pbox .pnrow{align-self:stretch;display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px;padding:2px 6px 2px 3px;min-height:36px;box-sizing:border-box;background:#5b4339;border:1px solid #c9a77a}
 #pbox .pnrow #pname{margin:0!important;padding:0!important;background:none!important;border:0!important;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #pjw{width:30px;height:30px;flex:none}
-@media (max-width:440px){#pbox{--pw:124px}#pbox .pnrow #pname{font-size:13.5px}#pjw{width:28px;height:28px}}
+@media (max-width:440px){#pbox .pnrow{min-height:34px}#pbox{--pw:124px}#pbox .pnrow #pname{font-size:13.5px}#pjw{width:28px;height:28px}}
 canvas.jwl{image-rendering:pixelated}.rel .nm canvas.jwl,.soc .nm canvas.jwl{width:22px;height:22px;vertical-align:middle;margin-right:3px;border:0!important;background:none!important;box-shadow:none!important;padding:0!important;border-radius:0!important;outline:0!important}`;document.head.appendChild(st);})();
 /* 관계 카드 이름 옆에도 보석 */
 if(typeof socCard==='function'){const _sc=socCard;socCard=function(id){return _sc(id).replace('<div class="nm">',`<div class="nm"><canvas class="jwl" data-jw="${id}" width="11" height="11"></canvas>`);};}
