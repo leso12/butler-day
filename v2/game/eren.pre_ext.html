@@ -4159,7 +4159,7 @@ function showLine(){
     if(sp)for(const n of SCENE.extra){if(n===sp||n.cueMv||CUE.mv.some(m=>m.n===n))continue;const dx=sp.x-n.x,dy=sp.y-n.y;if(Math.hypot(dx,dy)<T*9)n.dir=Math.abs(dx)>Math.abs(dy)*1.3?(dx<0?2:3):(dy<0?1:0);}}   // 하객들이 말하는 사람을 바라봄
   if(SCENE&&L.e&&EMO[L.e]&&!D.noemo){const nm2={};for(const id of ALL_IDS)nm2[CH[id].name]=id;const sid=L.s==='me'?'me':L.s==='npc'?(L.w||D.who):L.s==='gst'?nm2[L.nm]:null;if(sid)SCENE.emo={id:sid,ch:EMO[L.e],t:performance.now()};}
   $('#pbox').hidden=!(portrait&&who);
-  if(portrait&&who&&hasArt(who)){blit($('#pcv'),bust(who,L.e||'n'));$('#pname').textContent=nm;}else if(portrait)$('#pbox').hidden=true;
+  if(portrait&&who&&hasArt(who)){blit($('#pcv'),bust(who,L.e||'n'));$('#pname').textContent=(who==='erena'||nm===CH.erena.name)?'에레나(에렌)':nm;}else if(portrait)$('#pbox').hidden=true;
   $('#dlg').classList.toggle('pm',portrait&&!!who);
   const showSt=!portrait&&!!(D.right||L.s==='me');
   $('#stand').hidden=!showSt;

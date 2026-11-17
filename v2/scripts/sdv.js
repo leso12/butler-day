@@ -14,7 +14,7 @@ function jewelLv(id){const h=typeof hearts==='function'?hearts(id):0;return h>=1
 let JWF=0;function drawJewels(){const J=SDVIMG.jewel,X=SDVIMG.jmax;if(!J||!J.ok)return;
   for(const c of document.querySelectorAll('canvas.jwl')){const id=c.dataset.jw;if(!id||!CH[id]){c.style.visibility='hidden';continue;}c.style.visibility='';const g=c.getContext('2d');g.clearRect(0,0,11,11);const lv=jewelLv(id);
     if(lv===5){if(X&&X.ok)g.drawImage(X.im,0,0);}else g.drawImage(J.im,(JWF%4)*11,lv*11,11,11,0,0,11,11);c.title=`호감도 ♥${hearts(id)}`;}}
-setInterval(()=>{JWF++;const pb=document.getElementById('pbox');if(pb&&!pb.hidden){const nm=(document.getElementById('pname')||{}).textContent||'';const id=Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');if(j)j.dataset.jw=id&&S.pts&&(id in S.pts)?id:'';}drawJewels();},250);
+setInterval(()=>{JWF++;const pb=document.getElementById('pbox');if(pb&&!pb.hidden){const nm=(document.getElementById('pname')||{}).textContent||'';const id=Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');if(j){const ok=id&&S.pts&&(id in S.pts);j.dataset.jw=ok?id:'';j.style.display=ok?'':'none';}}drawJewels();},250);
 /* 대화 초상화: 이름 옆에 하트 병 */
 (function(){const pb=document.getElementById('pbox'),pn=document.getElementById('pname');if(pb&&pn&&!document.getElementById('pjw')){const row=document.createElement('div');row.className='pnrow';pn.parentNode.insertBefore(row,pn);const c=document.createElement('canvas');c.id='pjw';c.className='jwl';c.width=11;c.height=11;row.appendChild(c);row.appendChild(pn);}
   const st=document.createElement('style');st.textContent=`#pbox{--pw:150px;width:var(--pw)!important;padding:4px!important;box-sizing:border-box}
@@ -31,3 +31,15 @@ if(typeof socCard==='function'){const _sc=socCard;socCard=function(id){return _s
 const WORKP=['write','cook','wash'];
 {const _fc=face;face=function(n){if(n&&WORKP.includes(n.pose)&&n.wdir==null){n.wdir=n.dir;n.wpose=n.pose;}_fc(n);};}
 setInterval(()=>{if(typeof npcs==='undefined')return;for(const n of npcs){if(n.wdir==null)continue;if(n.pose!==n.wpose){n.wdir=null;continue;}if(!D&&!(document.getElementById('panel')&&!document.getElementById('panel').hidden)){n.dir=n.wdir;n.wdir=null;}}},300);
+/* 업무 안내 표시(노란 팻말)를 실제 업무 가구 위에: 본관 2층 추가로 좌표가 밀려 엉뚱한 칸(통로·문 앞)에 뜨던 것 */
+const TASK_IT={tea:'stove',wood:'woodpile',silver:'prep',laundry:'washtub',ledger:'ledgers',deco:'pillar',papers:'mydesk'};
+function taskObj(id,ar,x,y){const a=AREAS[ar],want=TASK_IT[id];if(!a||!want)return null;let best=null,bd=1e9;for(const o of a.objs){if(o.it!==want)continue;const d=Math.hypot(o.x+o.w/2-x,o.y-y);if(d<bd){bd=d;best=o;}}return best;}
+{const _tg=targets;targets=function(){const out=_tg();for(const m of out){
+  if(m.id==='wood'&&S.carry==='wood'){const o=taskObj('tea','keep',47,21);if(o){m.area='keep';m.px=(o.x+o.w/2)*T;m.py=o.y*T-10;}continue;}
+  if(!TASKS[m.id]||m.label!==TASKS[m.id].name)continue;const [ar,x,y]=TASKS[m.id].at,o=taskObj(m.id,ar,x,y);if(o){m.area=ar;m.px=(o.x+o.w/2)*T;m.py=o.y*T-10;}}
+  return out;};}
+/* 업무 가구를 바라보고 있고 할 업무가 있으면, 그 앞에 선 NPC(브란트·마르타 등)보다 업무를 먼저 */
+function workFacing(){const {qx,qy}=facing(),a=AREAS[S.area];if(!a||a.outdoor&&S.area!=='castle')return false;const ob=objAt(a,Math.floor(qx/T),Math.floor(qy/T)),it=ob&&ob.it;return !!(it&&WORK_OF[it]&&WORK_OF[it]());}
+function withNpcsAside(f){if(!workFacing())return f();const hid=[];for(const n of npcs)if(n.area===S.area&&!n.hidden){n.hidden=true;hid.push(n);}try{return f();}finally{for(const n of hid)n.hidden=false;}}
+{const _ac=action;action=function(){return withNpcsAside(()=>_ac.apply(this,arguments));};}
+{const _pk=peekLabel;peekLabel=function(){return withNpcsAside(()=>_pk.apply(this,arguments));};}
