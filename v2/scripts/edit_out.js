@@ -59,3 +59,6 @@ function eoExit(){EO.on=false;busy=false;P.x=EO.pp[0];P.y=EO.pp[1];ZOOM=EO.z||0;
 {const _tpO=togglePanel;togglePanel=function(kind,arg,keep){_tpO(kind,arg,keep);const p=$('#panel');const r=p&&p.querySelector('#edgo');if(r){const row=r.closest('.row');const tn=row&&row.querySelector('.tn'),tw=row&&row.querySelector('.tw');if(tn)tn.textContent='꾸미기';if(tw)tw.textContent='실내: 가구 옮기기·벽지 / 바깥(대공성·마을): 길·나무·꽃·가로등 칠하기';}};}
 /* 내보내기에 바깥 칸도 포함 */
 {const _ex=edExport;edExport=function(){_ex();const ta=document.querySelector('#edcat textarea');if(ta){try{const o=JSON.parse(ta.value);o.tileEdits=S.tileEdits||{};ta.value=JSON.stringify(o);}catch(e){}}};}
+/* Esc: 열린 목록이 있으면 닫고, 없으면 저장하고 나가기 (키보드로도 꾸미기에서 빠져나올 수 있게) */
+addEventListener('keydown',e=>{if(e.key!=='Escape')return;let ed=false,eo=false;try{ed=ED.on;eo=EO.on;}catch(_){}if(!ed&&!eo)return;e.preventDefault();e.stopImmediatePropagation();
+  const cat=document.getElementById('edcat');if(cat&&cat.style.display==='flex'){cat.style.display='none';return;}if(ed)edExit();else eoExit();},true);
