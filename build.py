@@ -1,5 +1,6 @@
 """빌드: src/ 의 조각들을 이어 붙여 index.html 한 파일로 만든다.  python3 build.py"""
-import os,glob,base64,json
+import os,glob,base64,json,sys
+if "--legacy" not in sys.argv:sys.exit("예전 버전 빌드입니다. 현재 게임은 python3 v2/scripts/ext.py 로 만드세요 (CLAUDE.md 참고). 정말 옛 버전을 만들려면 --legacy")
 ROOT=os.path.dirname(os.path.abspath(__file__));S=os.path.join(ROOT,'src')
 r=lambda f:open(os.path.join(S,f),encoding='utf-8').read()
 def custom():

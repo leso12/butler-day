@@ -1,0 +1,22 @@
+castle(대공성 마당): plaza=분수 정원, training=기사단 훈련장, gate=성문 앞, paddock=방목장, kgarden=텃밭, yard_w=세탁장 마당
+keep(본관): kbed=대공 침실, office=집무실, library=서재, parlor=응접실, guest=손님방, hallN=중앙 복도, myroom=부집사의 방, butler=집사실, infirmary=의무실, grand=중앙 계단홀, dining=식당, kitchen=주방, storage=창고, entrance=현관 홀, pantry=식료품 창고
+cellar(지하 와인 저장고): cellar=지하 와인 저장고
+servq(서쪽 별관): m_room=마르타의 방, b_room=브란트의 방, maids=하녀 숙소, servants=사용인 휴게실
+wash(세탁장): laundry=세탁실
+annex(동쪽 별관): ballroom=대연회장
+green(동관 온실): greenhouse=동관 온실
+kq(기사단 숙소): r_room=로웬의 방, bunks=기사 침소, kq=기사단 식당
+armory(무기고): armory=무기고
+stable(마구간): stable=마구간
+town(로젠하임 마을): hagen_d=하겐 상회 앞, tgate=성으로 가는 길, tea_t=은빛 주전자 테라스, market=시장 광장, tav_t=검은 곰 테라스, lake=호숫가, park=공원, homes=주택가
+gen(모리스 잡화점): gen_in=모리스 잡화점
+flower(꽃집 «북녘정원»): flower_in=꽃집 «북녘정원»
+book(서점 «잉크와 양피지»): book_in=서점 «잉크와 양피지»
+tea(찻집 «은빛 주전자»): tea_in=찻집 «은빛 주전자»
+bakery(빵집 «황금 밀»): bakery_in=빵집 «황금 밀»
+hagen(하겐 상회): hagen_in=하겐 상회, h_ware=상회 창고
+tavern(선술집 «검은 곰»): tavern_in=선술집 «검은 곰»
+tailor(양장점 «로즈»): tailor_in=양장점 «로즈»
+house1(방앗간 집): house1_in=방앗간 집
+house2(빨간 지붕 집): house2_in=빨간 지붕 집
+house3(호숫가 오두막): house3_in=호숫가 오두막

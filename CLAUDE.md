@@ -6,7 +6,13 @@
 - 사용자와는 **항상 한국어로** 대화한다.
 - 한 번에 한 가지 작업에 집중하고, 여러 요청이 오면 우선순위를 정해 순서대로 처리한다.
 
-## 빌드 · 확인
+## ⚠ 2026-11 이후: v2 빌드가 현재 버전 (index.html은 v2에서 만든다)
+- 현재 게임(스듀 리텍·꾸미기 모드·2층 본관 등)은 `v2/`에서 만든다: `python3 v2/scripts/ext.py` → `v2/game/eren.html` 생성 → 루트 `index.html`로 복사해서 커밋.
+  - 원본 본문: `v2/game/eren.pre_ext.html` · 덧붙는 스크립트: `v2/scripts/*.js` (순서는 ext.py) · 대사 데이터: `v2/talk/`
+  - `v2/build/*.py`는 모드 그림을 잘라 `*_data.js`를 만드는 스크립트(원본 모드 파일은 저장소에 없음, 참고용).
+- **루트의 `build.py`는 예전(첫 업로드) 버전용이라 돌리면 index.html이 옛 게임으로 덮인다.** `--legacy`를 붙여야만 돈다.
+
+## (예전 버전) 빌드 · 확인
 - `python3 build.py` → 루트에 `index.html` 생성. **소스를 고친 뒤 반드시 빌드하고 index.html까지 커밋**한다 (Pages가 이 파일을 보여 준다).
 - 문법 검사: `node --check`가 어렵다면 index.html의 마지막 `<script>` 내용을 떼어 `new Function()`으로 확인.
 - 자동 검사 (Playwright 필요, 루트에서 실행):
