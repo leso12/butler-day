@@ -76,3 +76,14 @@ body.menuopen #panel{position:fixed!important;top:var(--ptop,90px)!important;bot
   return r;};}
 /* 패널이 닫히면 조이스틱 줄 다시 보이게 */
 setInterval(()=>{const p=document.getElementById('panel');if(p&&p.hidden&&document.body.classList.contains('menuopen'))document.body.classList.remove('menuopen');},300);
+
+/* 요리 동작: 화덕·오븐을 바라볼 때만 냄비 젓기 + 김(화덕 위에서). 개수대 앞이면 씻기, 조리대 앞이면 칼질 (허공에서 김이 나던 것) */
+function cookTarget(e){const n=e&&e.n;const a=AREAS[(n&&n.area)||S.area];if(!a)return null;const x=n?n.x:P.x,y=n?n.y:P.y,d=n?n.dir:P.dir;const [dx,dy]=DIRV[d]||[0,0];
+  const tx=Math.floor((x+dx*12)/T),ty=Math.floor((y-4+dy*12)/T);for(const [ox,oy] of [[0,0],[0,-1],[dx,dy]]){const o=objAt(a,tx+ox,ty+oy);if(o&&['stove','oven','fireplace','sink','counter','table','prep'].includes(o.k))return o;}return null;}
+{const _ck=POSEFX.cook;POSEFX.cook=function(g,sx,sy,d,sd,t,e){const o=cookTarget(e),k=o&&o.k;
+  if(k==='stove'||k==='oven'||k==='fireplace'){const a=t/170+sd,lx=sx+6+Math.round(Math.sin(a)*1.5),ly=sy-21+Math.round(Math.cos(a));
+    g.fillStyle='#d8d0c4';g.fillRect(sx+4,ly+2,3,4);g.fillStyle='#f2e6da';g.fillRect(lx-1,ly+1,2,2);g.fillStyle='#6a4a30';g.fillRect(lx,ly-4,1,5);
+    if(Math.random()<.06){const cx=(o.x+o.w/2)*T-(CAM.cx||0),cy=o.y*T-(CAM.cy||0);STEAM.push({x:cx-3+Math.random()*6,y:cy-6,t:0});}return;}
+  if(k==='sink'){return POSEFX.wash(g,sx,sy,d,sd,t,e);}
+  /* 조리대·탁자: 칼질 (김 없음) */
+  const ph=Math.floor(t/140+sd*3)%4,ky=ph<2?0:2;g.fillStyle='#e8e2d8';g.fillRect(sx+3,sy-14+ky,4,1);g.fillStyle='#6a4a30';g.fillRect(sx+7,sy-14+ky,2,1);g.fillStyle='#f2e6da';g.fillRect(sx+2,sy-13+ky,2,2);};}

@@ -4697,7 +4697,7 @@ function togglePanel(kind,arg,keep){
   panelKind=kind;panelArg=arg;if(kind==='menu'&&arg)menuTab=arg;
   const X_=`<button class="pbtn" id="pclose">닫기</button>`;let html='';
   if(kind==='map'){const v=mapView||S.area,a=AREAS[v];
-    const tabs=[['castle','성 마당'],['keep','본관 1층'],['keep2','본관 2층'],['town','마을']];if(!tabs.some(t=>t[0]===S.area))tabs.push([S.area,AREAS[S.area].name]);
+    const tabs=[['castle','성 마당'],['keep','본관 1층'],['keep2','본관 2층'],['annex','연회장·결혼식장'],['servq','사용인 숙소'],['town','마을']];if(!tabs.some(t=>t[0]===S.area))tabs.push([S.area,AREAS[S.area].name]);
     html=`<h2>${a.name} <span class="tabs">${tabs.map(([k,l])=>`<button class="tab${v===k?' on':''}" data-mv="${k}">${l}</button>`).join('')}${X_}</span></h2><div class="mapwrap" id="mapw"><canvas id="mapc"></canvas></div>
       <div class="mlegend"><span><i style="background:var(--rose)"></i>${myName()} (${S.area===v?placeName(Math.floor(P.x/T),Math.floor((P.y-2)/T)):'다른 지역'})</span><span><i style="background:#3a4a6a"></i>사람들</span><span><i class="sq" style="background:#f2c75c"></i>업무</span><span><i class="sq" style="background:#ee9ab0"></i>일정 · 약속</span></div>`;
   }else if(kind==='work'){
