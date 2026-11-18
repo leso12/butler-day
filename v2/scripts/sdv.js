@@ -52,3 +52,27 @@ function syncPjw(){const pb=document.getElementById('pbox');if(!pb||pb.hidden)re
 {const _sl=showLine;showLine=function(){const r=_sl.apply(this,arguments);try{syncPjw();}catch(e){}return r;};}
 /* 사람들 창·관계 카드 이름에 성 붙이기 */
 {const _tpF=togglePanel;togglePanel=function(){const r=_tpF.apply(this,arguments);const p=document.getElementById('panel');if(p&&!p.hidden){for(const nm of p.querySelectorAll('.rel .nm,.soc .nm')){for(const t of nm.childNodes){if(t.nodeType!==3)continue;const v=t.textContent.trim();const id=Object.keys(FULLNAME).find(k=>CH[k]&&CH[k].name===v);if(id&&id!=='erena')t.textContent=FULLNAME[id];}}}return r;};}
+/* 메뉴 개선: 탭 10개를 한 줄로(옆으로 밀기), 위에 고정 · 지금 탭 이름 표시 · 내용 칸 넓게 · 메뉴 열면 조이스틱 줄 숨겨 화면을 크게 */
+(function(){const st=document.createElement('style');st.textContent=`
+#panel.menuv2{padding-top:0!important}
+#panel.menuv2 h2{position:sticky;top:0;z-index:5;background:#f4ead8;margin:0 -14px 10px!important;padding:8px 52px 6px 10px!important;display:block!important}
+#panel.menuv2 h2 .tabs{display:flex!important;flex-wrap:nowrap!important;gap:4px!important;overflow-x:auto;scrollbar-width:none;padding:4px 2px 2px}
+#panel.menuv2 h2 .tabs::-webkit-scrollbar{display:none}
+#panel.menuv2 .tab{flex:none!important;min-width:50px!important;width:50px!important;height:50px!important;padding:3px 0!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:11px!important;line-height:1.1}
+#panel.menuv2 .tab svg{width:22px!important;height:22px!important}
+#panel.menuv2 .tab.on{background:#5b4339!important;color:#f7efe2!important;transform:none!important;box-shadow:inset 0 0 0 2px #c9a77a!important}
+#panel.menuv2 .tab.on svg{filter:brightness(1.6)}
+#panel.menuv2 .mtitle{font-size:15px;font-weight:bold;color:#5b4339;margin:6px 2px 0;display:flex;align-items:center;gap:6px}
+#panel.menuv2 .mtitle:before{content:'';width:4px;height:16px;background:#c9a77a}
+#panel.menuv2 h2 > button,#panel.menuv2 h2 .x{position:absolute!important;right:8px;top:12px}
+body.menuopen #pad{visibility:hidden}
+body.menuopen #panel{position:fixed!important;top:var(--ptop,90px)!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;max-height:none!important;z-index:50}
+#panel.menuv2 h2 .tabs{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+@media (max-width:440px){#panel.menuv2{width:calc(100% - 12px)!important}}`;document.head.appendChild(st);})();
+{const _tpM=togglePanel;togglePanel=function(kind,arg,keep){const r=_tpM.apply(this,arguments);const p=document.getElementById('panel');if(!p)return r;
+  const isMenu=!p.hidden&&kind==='menu';{const sg=document.getElementById('stage');if(sg)document.body.style.setProperty('--ptop',(sg.getBoundingClientRect().top+6)+'px');}p.classList.toggle('menuv2',isMenu);document.body.classList.toggle('menuopen',!p.hidden);
+  if(isMenu){const h=p.querySelector('h2');const on=h&&h.querySelector('.tab.on');if(h&&!h.querySelector('.mtitle')){const t=document.createElement('div');t.className='mtitle';t.textContent=on?on.textContent.replace('•','').trim():'';h.appendChild(t);}
+    if(on)try{on.scrollIntoView({inline:'center',block:'nearest'});}catch(e){}}
+  return r;};}
+/* 패널이 닫히면 조이스틱 줄 다시 보이게 */
+setInterval(()=>{const p=document.getElementById('panel');if(p&&p.hidden&&document.body.classList.contains('menuopen'))document.body.classList.remove('menuopen');},300);
