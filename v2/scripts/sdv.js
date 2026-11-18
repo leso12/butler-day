@@ -43,3 +43,7 @@ function workFacing(){const {qx,qy}=facing(),a=AREAS[S.area];if(!a||a.outdoor&&S
 function withNpcsAside(f){if(!workFacing())return f();const hid=[];for(const n of npcs)if(n.area===S.area&&!n.hidden){n.hidden=true;hid.push(n);}try{return f();}finally{for(const n of hid)n.hidden=false;}}
 {const _ac=action;action=function(){return withNpcsAside(()=>_ac.apply(this,arguments));};}
 {const _pk=peekLabel;peekLabel=function(){return withNpcsAside(()=>_pk.apply(this,arguments));};}
+/* 화자가 바뀌는 순간 초상화·이름·하트를 한 번에 (예전엔 하트가 0.25초 뒤에 따로 바뀌어 이름표가 늦게 맞춰졌음) */
+function syncPjw(){const pb=document.getElementById('pbox');if(!pb||pb.hidden)return;const nm=(document.getElementById('pname')||{}).textContent||'';const id=Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');
+  if(j){const ok=id&&S.pts&&(id in S.pts);j.dataset.jw=ok?id:'';j.style.display=ok?'':'none';}drawJewels();}
+{const _sl=showLine;showLine=function(){const r=_sl.apply(this,arguments);try{syncPjw();}catch(e){}return r;};}
