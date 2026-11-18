@@ -78,7 +78,7 @@ body.menuopen #panel{position:fixed!important;top:var(--ptop,90px)!important;bot
 setInterval(()=>{const p=document.getElementById('panel');if(p&&p.hidden&&document.body.classList.contains('menuopen'))document.body.classList.remove('menuopen');},300);
 
 /* 요리 동작: 화덕·오븐을 바라볼 때만 냄비 젓기 + 김(화덕 위에서). 개수대 앞이면 씻기, 조리대 앞이면 칼질 (허공에서 김이 나던 것) */
-function cookTarget(e){const n=e&&e.n;const a=AREAS[(n&&n.area)||S.area];if(!a)return null;const x=n?n.x:P.x,y=n?n.y:P.y,d=n?n.dir:P.dir;const [dx,dy]=DIRV[d]||[0,0];
+function cookTarget(e){const n=e&&e.n;const a=AREAS[(n&&n.area)||S.area];if(!a)return null;const x=n?n.x:P.x,y=n?n.y:P.y,sp=n&&n.act&&n.act[n.spot],d=n?(sp&&sp[3]==='cook'?sp[2]:n.dir):P.dir;const [dx,dy]=DIRV[d]||[0,0];
   const tx=Math.floor((x+dx*12)/T),ty=Math.floor((y-4+dy*12)/T);for(const [ox,oy] of [[0,0],[0,-1],[dx,dy]]){const o=objAt(a,tx+ox,ty+oy);if(o&&['stove','oven','fireplace','sink','counter','table','prep'].includes(o.k))return o;}return null;}
 {const _ck=POSEFX.cook;POSEFX.cook=function(g,sx,sy,d,sd,t,e){const o=cookTarget(e),k=o&&o.k;
   if(k==='stove'||k==='oven'||k==='fireplace'){const a=t/170+sd,lx=sx+6+Math.round(Math.sin(a)*1.5),ly=sy-21+Math.round(Math.cos(a));
@@ -87,3 +87,20 @@ function cookTarget(e){const n=e&&e.n;const a=AREAS[(n&&n.area)||S.area];if(!a)r
   if(k==='sink'){return POSEFX.wash(g,sx,sy,d,sd,t,e);}
   /* 조리대·탁자: 칼질 (김 없음) */
   const ph=Math.floor(t/140+sd*3)%4,ky=ph<2?0:2;g.fillStyle='#e8e2d8';g.fillRect(sx+3,sy-14+ky,4,1);g.fillStyle='#6a4a30';g.fillRect(sx+7,sy-14+ky,2,1);g.fillStyle='#f2e6da';g.fillRect(sx+2,sy-13+ky,2,2);};}
+
+/* NPC 일거리 더하기: 서 있기만 하던 자리에 맞는 동작 (청소·검술 훈련·무기 손질·말 빗질·빨래 널기·바느질·장작 패기) */
+const WORKPOSE={n_clean:'sweep',m_clean:'sweep',n_rooms:'sweep',n_rooms2:'sweep',n_ball:'sweep',e_hall:'dust',r_train:'train',d_train:'train',kn_train:'train',r_armory:'polish',d_armory:'polish',g_stable:'groom',g_paddock:'groom',t_stable:'groom',r_stable:'groom',m_line:'hang',o_sew:'sew',t_wood:'chop',c_flower:'water',o_flower:'water'};
+for(const [k,ps] of Object.entries(WORKPOSE)){const v=ACTS[k];if(!Array.isArray(v))continue;for(const s of v)if(s[3]==='stand')s[3]=ps;}
+
+const WP=(g,c,x,y,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+Object.assign(POSEFX,{
+  sweep(g,sx,sy,d,sd,t){const k=Math.sin(t/180+sd)*3,s=d===2?-1:1,x=Math.round(sx+s*5+k*s);WP(g,'#7a5a3a',x,sy-17,1,14);WP(g,'#c9a050',x-2,sy-3,5,2);WP(g,'#9a7a40',x-2,sy-1,5,1);if(Math.random()<.03)STEAM.push({x:x+Math.random()*4-2,y:sy-2,t:0,b:1});},
+  dust(g,sx,sy,d,sd,t){const k=Math.round(Math.sin(t/120+sd)*2),s=d===2?-1:1;WP(g,'#6a4a30',sx+s*6,sy-22+k,1,6);WP(g,'#e8e0d0',sx+s*6-1,sy-26+k,3,3);WP(g,'#c8b8a0',sx+s*6-1,sy-25+k,3,1);},
+  train(g,sx,sy,d,sd,t){const ph=(t/260+sd)%1,s=d===2?-1:1,a=ph<.35?-1.2+ph*5:ph<.5?.6:.6-(ph-.5)*3.6;g.save();g.translate(sx+s*4,sy-14);g.rotate(a*s);WP(g,'#d8d8e0',0,-11,1,11);WP(g,'#8a6a40',-1,0,3,1);WP(g,'#5a4030',0,1,1,2);g.restore();},
+  polish(g,sx,sy,d,sd,t){const k=Math.round(Math.sin(t/150+sd)*2);WP(g,'#d8d8e0',sx-5,sy-12,10,1);WP(g,'#8a6a40',sx+5,sy-13,2,3);WP(g,'#f4efe4',sx-2+k,sy-13,3,3);},
+  groom(g,sx,sy,d,sd,t){const k=Math.round(Math.sin(t/160+sd)*3),s=d===2?-1:1;WP(g,'#7a5030',sx+s*7,sy-15+k,3,2);WP(g,'#c8a070',sx+s*7,sy-16+k,3,1);},
+  hang(g,sx,sy,d,sd,t){const up=Math.floor(t/600+sd)%2,y=sy-(up?24:18);WP(g,'#f4f0e8',sx-3,y,7,5);WP(g,'#d8d0c0',sx-3,y+4,7,1);},
+  sew(g,sx,sy,d,sd,t){const k=Math.floor(t/200+sd)%4;WP(g,'#c88a9a',sx-4,sy-11,8,4);WP(g,'#a8607a',sx-4,sy-8,8,1);WP(g,'#e8e8f0',sx-2+k*2,sy-13+(k%2),1,3);},
+  chop(g,sx,sy,d,sd,t){const ph=(t/450+sd)%1,s=d===2?-1:1,a=ph<.6?-1.4+ph:(-.8+ (ph-.6)*5);g.save();g.translate(sx+s*4,sy-15);g.rotate(Math.min(.9,a)*s);WP(g,'#7a5a3a',0,-9,1,10);WP(g,'#b8b8c0',-2,-10,4,3);g.restore();if(ph>.75&&ph<.78&&Math.random()<.5)STEAM.push({x:sx+s*9,y:sy-2,t:0,b:1});},
+  water(g,sx,sy,d,sd,t){const s=d===2?-1:1,x=sx+s*7;WP(g,'#7a8a9a',x-2,sy-14,5,4);WP(g,'#5a6a7a',x+s*3,sy-13,2,1);if(Math.random()<.2){WP(g,'#a8d0e8',x+s*5,sy-11+Math.floor(Math.random()*6),1,1);}}
+});
