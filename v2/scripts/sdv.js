@@ -104,3 +104,44 @@ Object.assign(POSEFX,{
   chop(g,sx,sy,d,sd,t){const ph=(t/450+sd)%1,s=d===2?-1:1,a=ph<.6?-1.4+ph:(-.8+ (ph-.6)*5);g.save();g.translate(sx+s*4,sy-15);g.rotate(Math.min(.9,a)*s);WP(g,'#7a5a3a',0,-9,1,10);WP(g,'#b8b8c0',-2,-10,4,3);g.restore();if(ph>.75&&ph<.78&&Math.random()<.5)STEAM.push({x:sx+s*9,y:sy-2,t:0,b:1});},
   water(g,sx,sy,d,sd,t){const s=d===2?-1:1,x=sx+s*7;WP(g,'#7a8a9a',x-2,sy-14,5,4);WP(g,'#5a6a7a',x+s*3,sy-13,2,1);if(Math.random()<.2){WP(g,'#a8d0e8',x+s*5,sy-11+Math.floor(Math.random()*6),1,1);}}
 });
+
+/* ── 앉기: 진짜 의자에서만 · 한 의자에 한 명 ── */
+const SEATK2=new Set(['chair','bench','stool','armchair','sofa']);
+function seatAt(a,x,y){if(!a.map[y])return null;if(a.map[y][x]==='Y')return {k:'Y'};const o=objAt(a,x,y);return o&&SEATK2.has(o.k)?o:null;}
+function seatDir(a,o,x,y){if(o&&o.d!=null)return o.d;let best=null,bd=9;for(const t of a.objs){if(!['table','desk','fireplace','piano'].includes(t.k))continue;const cx=t.x+t.w/2-.5,cy=t.y+t.h/2-.5,dd=Math.hypot(cx-x,cy-y);if(dd<bd){bd=dd;best=Math.abs(cx-x)>Math.abs(cy-y)?(cx<x?2:3):(cy<y?1:0);}}return best;}
+function findSeat(a,x,y,taken){const rm=roomAt?roomAt(x,y):null;let best=null,bd=99;
+  for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const xx=x+dx,yy=y+dy,o=seatAt(a,xx,yy);if(!o)continue;if(taken&&taken(xx,yy))continue;const d=Math.abs(dx)+Math.abs(dy);if(d<bd){bd=d;best=[xx,yy,o];}}return best;}
+/* 불러올 때: 의자 없는 앉기 자리 → 가까운 의자로 옮기거나 서 있기로 */
+(function(){let moved=0,stood=0;for(const [k,v] of Object.entries(ACTS)){if(!Array.isArray(v))continue;const a=AREAS[ACTS_AREA[k]];if(!a||!a.map)continue;const sv=A;A=a;
+  for(const s of v){if(s[3]!=='sit'&&s[3]!=='tea')continue;if(seatAt(a,s[0],s[1]))continue;const f=findSeat(a,s[0],s[1]);
+    if(f&&Math.abs(f[0]-s[0])+Math.abs(f[1]-s[1])<=3){s[0]=f[0];s[1]=f[1];const d=seatDir(a,f[2].k==='Y'?null:f[2],f[0],f[1]);if(d!=null)s[2]=d;moved++;}else{s[3]='stand';stood++;}}A=sv;}
+  window.SEATFIX=[moved,stood];})();
+/* 도착할 때: 그 의자에 이미 누가 앉아 있으면 빈 의자로, 없으면 옆에 서기 */
+{const _ar=arrive;arrive=function(n){_ar(n);if(n.pose!=='sit'&&n.pose!=='tea')return;const a=AREAS[n.area];if(!a)return;const [tx,ty]=tileOf(n);
+  const taken=(x,y)=>npcs.some(m=>m!==n&&m.area===n.area&&!m.hidden&&['sit','tea','write'].includes(m.pose)&&tileOf(m)[0]===x&&tileOf(m)[1]===y);
+  if(seatAt(a,tx,ty)&&!taken(tx,ty))return;const f=findSeat(a,tx,ty,taken);
+  if(f&&Math.abs(f[0]-tx)+Math.abs(f[1]-ty)<=4){n.x=f[0]*T+8;n.y=f[1]*T+14;const d=seatDir(a,f[2].k==='Y'?null:f[2],f[0],f[1]);if(d!=null)n.dir=d;}else n.pose='stand';};}
+/* 플레이어도 의자 없는 곳에서 «앉기» 금지 (P.pose sit 은 의자에서만 시작되므로 그대로) */
+
+/* ── 도구 동작: 원래 손 자리(스프라이트의 손 픽셀)에 도구 손잡이를 붙여, 손이 도구를 쥐도록 ── */
+function handPt(e,sx,sy,d,side){const sp=e&&e.sp,h=sp?sp.height:32,top=sy-h+1;const row=top+Math.min(h-8,24);
+  if(d===2)return [sx-8+5,row];if(d===3)return [sx-8+10,row];return [sx-8+(side<0?3:12),row];}
+function skinAt(e){try{const sp=e.sp,q=sp.getContext('2d').getImageData(12,Math.min(sp.height-8,24),1,1).data;if(q[3]>100)return `rgb(${q[0]},${q[1]},${q[2]})`;}catch(_){}return '#f2d6c0';}
+Object.assign(POSEFX,{
+  sweep(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s),k=Math.round(Math.sin(t/180+sd)*3);
+    /* 손잡이: 손을 지나 위로 5px, 아래로 빗자루 머리까지 (머리는 바닥에서 좌우로) */
+    const bx=hx+k*s,by=sy-1;g.strokeStyle='#7a5a3a';g.lineWidth=1;g.beginPath();g.moveTo(hx+.5-k*s*.4,hy-6);g.lineTo(bx+.5,by-2);g.stroke();
+    WP(g,'#c9a050',bx-2,by-2,5,2);WP(g,'#9a7a40',bx-2,by,5,1);WP(g,skinAt(e),hx-1,hy-1,2,2);if(Math.random()<.03)STEAM.push({x:bx+Math.random()*4-2,y:by,t:0,b:1});},
+  dust(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s),k=Math.round(Math.sin(t/120+sd)*2);
+    WP(g,'#6a4a30',hx,hy-6+k,1,6);WP(g,'#e8e0d0',hx-1,hy-9+k,3,3);WP(g,'#c8b8a0',hx-1,hy-8+k,3,1);WP(g,skinAt(e),hx-1,hy-1+k,2,2);},
+  train(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s),ph=(t/260+sd)%1,a=ph<.35?-1.1+ph*4.6:ph<.5?.5:.5-(ph-.5)*3.2;
+    g.save();g.translate(hx+.5,hy);g.rotate(a*s);WP(g,'#d8d8e0',0,-11,1,10);WP(g,'#f4f4f8',0,-11,1,2);WP(g,'#8a6a40',-1,-1,3,1);WP(g,'#5a4030',0,0,1,2);g.restore();WP(g,skinAt(e),hx-1,hy-1,2,2);},
+  chop(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s),ph=(t/450+sd)%1,a=ph<.6?-1.3+ph:(-.7+(ph-.6)*4.5);
+    g.save();g.translate(hx+.5,hy);g.rotate(Math.min(.9,a)*s);WP(g,'#7a5a3a',0,-9,1,10);WP(g,'#b8b8c0',-2,-10,4,3);g.restore();WP(g,skinAt(e),hx-1,hy-1,2,2);if(ph>.75&&ph<.78&&Math.random()<.5)STEAM.push({x:hx+s*5,y:sy-2,t:0,b:1});},
+  polish(g,sx,sy,d,sd,t,e){if(d===1)return;const [rx,ry]=handPt(e,sx,sy,0,1),[lx,ly]=handPt(e,sx,sy,0,-1),k=Math.round(Math.sin(t/150+sd)*2);
+    WP(g,'#d8d8e0',lx,ly,rx-lx,1);WP(g,'#8a6a40',rx,ly-1,2,3);WP(g,'#f4efe4',lx+3+k,ly-1,3,2);WP(g,skinAt(e),rx-1,ry-1,2,2);WP(g,skinAt(e),lx+3+k,ly,2,2);},
+  groom(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s),k=Math.round(Math.sin(t/160+sd)*2);WP(g,'#7a5030',hx-1+k*s,hy-2,4,2);WP(g,'#c8a070',hx-1+k*s,hy-3,4,1);WP(g,skinAt(e),hx-1+k*s,hy-1,2,2);},
+  hang(g,sx,sy,d,sd,t,e){if(d===1)return;const [rx,ry]=handPt(e,sx,sy,0,1),[lx]=handPt(e,sx,sy,0,-1),up=Math.floor(t/600+sd)%2?3:0;WP(g,'#f4f0e8',lx,ry-5-up,rx-lx+1,5);WP(g,'#d8d0c0',lx,ry-1-up,rx-lx+1,1);WP(g,skinAt(e),lx-1,ry-5-up,2,2);WP(g,skinAt(e),rx,ry-5-up,2,2);},
+  sew(g,sx,sy,d,sd,t,e){if(d===1)return;const [rx,ry]=handPt(e,sx,sy,0,1),[lx]=handPt(e,sx,sy,0,-1),k=Math.floor(t/200+sd)%4;WP(g,'#c88a9a',lx+1,ry-2,rx-lx-1,3);WP(g,'#a8607a',lx+1,ry,rx-lx-1,1);WP(g,'#e8e8f0',lx+2+k*2,ry-4+(k%2),1,3);},
+  water(g,sx,sy,d,sd,t,e){if(d===1)return;const s=d===2?-1:1,[hx,hy]=handPt(e,sx,sy,d,s);WP(g,'#7a8a9a',hx-2,hy,5,4);WP(g,'#5a6a7a',hx-1,hy-1,3,1);WP(g,'#5a6a7a',hx+s*3,hy+1,2,1);WP(g,skinAt(e),hx-1,hy-1,2,2);if(Math.random()<.2)WP(g,'#a8d0e8',hx+s*5,hy+2+Math.floor(Math.random()*5),1,1);}
+});

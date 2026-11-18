@@ -4021,7 +4021,7 @@ function draw(t){
     if(e.cat){drawCat(ctx,sx,sy,t,e.cat);continue;}
     ctx.fillStyle='rgba(30,15,20,.28)';ctx.fillRect(sx-5,sy-1,10,2);ctx.fillRect(sx-4,sy+1,8,1);
     if(e.n&&(e.n.pose==='sit'||e.n.pose==='write'||e.n.pose==='tea')){const st=tileOf(e.n),so=objAt(a,st[0],st[1]),seat=(so&&FLAT.has(so.k))||a.map[st[1]][st[0]]==='Y';
-      if(!seat&&e.n.dir!==1){const sd=e.n.dir===0?0:(e.n.dir===3?-1:1);   // 의자: 몸 뒤 좌판 + 다리 (옆모습은 엉덩이 쪽으로)
+      if(false&&!seat&&e.n.dir!==1){const sd=e.n.dir===0?0:(e.n.dir===3?-1:1);   /* 가짜 의자 그리기 끔: 앉기는 진짜 의자에서만 */   // 의자: 몸 뒤 좌판 + 다리 (옆모습은 엉덩이 쪽으로)
         ctx.fillStyle='#3a2828';ctx.fillRect(sx-6+sd*2,sy-8,12,3);ctx.fillRect(sx-6+sd*2,sy-5,2,6);ctx.fillRect(sx+4+sd*2,sy-5,2,6);ctx.fillStyle='#8a5a34';ctx.fillRect(sx-5+sd*2,sy-8,10,1);}
       {const cut=backSeatCut(e,a);if(cut)ctx.drawImage(e.sp,0,0,16,e.sp.height-cut,sx-8,sy-e.sp.height+1,16,e.sp.height-cut);else ctx.drawImage(e.sp,sx-8,sy-e.sp.height+1);}
       if(e.n.dir===1&&!seat){ctx.fillStyle='#3a2828';ctx.fillRect(sx-6,sy-15,12,10);ctx.fillRect(sx-6,sy-5,2,6);ctx.fillRect(sx+4,sy-5,2,6);ctx.fillStyle='#7a4a2c';ctx.fillRect(sx-5,sy-14,10,8);ctx.fillStyle='#9a6038';ctx.fillRect(sx-5,sy-14,10,1);}   // 뒷모습: 등받이가 몸 앞에
