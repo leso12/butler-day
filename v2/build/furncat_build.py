@@ -74,6 +74,12 @@ for fn,pk in [('Jewel.json','VJ'),('JewelRuby.json','VJR'),('Windows.json','VJ')
         if f[8] in seen or k in ('VF.JewelCurtains','VF.JewelWideCurtains') and f[8] not in ('384','386') and pk=='VJ':continue
         if 'Windows' in fn and f[8] not in ('384','386'):continue
         seen.add(f[8]);nm=k.split('.',1)[1].replace('Ruby','');add(pk,nm,f[1],f[2],f[3],f[4],f[8])
+# 한글 이름 붙이기 (item 끝에 ko)
+import sys;sys.path.insert(0,R+'build');from fname_ko import ko as _ko
+_svn={'decor':'기본 장식','rug':'기본 러그'};_svc={}
+for it in items:
+    if it[0]=='SV':_svc[it[2]]=_svc.get(it[2],0)+1;it.append(f"{_svn.get(it[2],'기본 가구')} {_svc[it[2]]}")
+    else:it.append(_ko(it[1]))
 def u(p):
     b=io.BytesIO();Image.open(p).convert('RGBA').save(b,'PNG',optimize=True);return 'data:image/png;base64,'+base64.b64encode(b.getvalue()).decode()
 sheets={'RX':u(R+"mods4/CP_HXW_Romanti/[CP] H&W Romantic Furniture/Assets/RomanticFurniture.png"),'VJ':u(J+'VFJewel.png'),'VJF':u(J+'VFJewelFront.png'),'VJR':u(J+'VFJewelRuby.png'),'VJRF':u(J+'VFJewelRubyFront.png')}

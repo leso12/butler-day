@@ -39,7 +39,7 @@ function mbCv(k){const MB=M4IMG.m_summer;if(!MB||!MB.ok)return null;const r=M4.m
 {const _fc4=furnCanvas;furnCanvas=function(sp){if(sp&&sp.mbk){return mbCv(sp.mbk)||mk(16,16);}return _fc4(sp);};}
 {const _m=M4IMG.m_summer.im.onload;M4IMG.m_summer.im.onload=function(){_m&&_m.apply(this,arguments);for(const id of ['annex','keep'])if(AREAS[id])buildArea(AREAS[id]);};}
 function weddingToday(){return (S.wed&&S.wed.day===S.day)||(SCENE&&S.area==='annex'&&S.wed);}
-{const _fg=farmGround;farmGround=function(cx,cy,t){_fg(cx,cy,t);if(S.area!=='annex'||!weddingToday())return;for(const [x,k] of [[6.5,'arch'],[22.5,'arch']]){const c=mbCv(k);if(!c)continue;ctx.drawImage(c,Math.round(x*T-c.width/2-cx),Math.round(6*T-c.height-cy));}};}
+{const _fg=farmGround;farmGround=function(cx,cy,t){_fg(cx,cy,t);if(S.area!=='annex'||!weddingToday())return;for(const [x,k] of [[6.5,'arch'],[22.5,'arch']]){const c=mbCv(k);if(!c)continue;ctx.drawImage(c,Math.round(x*T-c.width/2-cx),Math.round(6.5*T-c.height-cy));}};}
 /* 대공성 중앙 정원·건물 사이 나무 정리: 바깥 테두리 숲만 남김 */
 (function(){const a=AREAS.castle;if(!a)return;for(let y=13;y<=43;y++)for(let x=13;x<=56;x++){if('tI'.includes(a.map[y][x])){const P_=c=>c===':';a.map[y][x]=(P_(a.map[y][x-1])&&P_(a.map[y][x+1]))||(P_(a.map[y-1][x])&&P_(a.map[y+1][x]))?':':',';if(a.blk)a.blk[y*a.MW+x]=0;}}for(const [x,y] of [[24,47],[39,46],[42,48],[40,53]])if('tI'.includes(a.map[y][x])){a.map[y][x]=',';if(a.blk)a.blk[y*a.MW+x]=0;}})();
 /* 겹침 정리: 나무·꽃·덤불·장식 그림이 건물(지붕·벽) 위에 걸치면 그 칸은 풀밭으로 (문 앞 등불만 예외) */

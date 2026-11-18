@@ -14,7 +14,7 @@ function jewelLv(id){const h=typeof hearts==='function'?hearts(id):0;return h>=1
 let JWF=0;function drawJewels(){const J=SDVIMG.jewel,X=SDVIMG.jmax;if(!J||!J.ok)return;
   for(const c of document.querySelectorAll('canvas.jwl')){const id=c.dataset.jw;if(!id||!CH[id]){c.style.visibility='hidden';continue;}c.style.visibility='';const g=c.getContext('2d');g.clearRect(0,0,11,11);const lv=jewelLv(id);
     if(lv===5){if(X&&X.ok)g.drawImage(X.im,0,0);}else g.drawImage(J.im,(JWF%4)*11,lv*11,11,11,0,0,11,11);c.title=`호감도 ♥${hearts(id)}`;}}
-setInterval(()=>{JWF++;const pb=document.getElementById('pbox');if(pb&&!pb.hidden){const nm=(document.getElementById('pname')||{}).textContent||'';const id=Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');if(j){const ok=id&&S.pts&&(id in S.pts);j.dataset.jw=ok?id:'';j.style.display=ok?'':'none';}}drawJewels();},250);
+setInterval(()=>{JWF++;const pb=document.getElementById('pbox');if(pb&&!pb.hidden){const nm=(document.getElementById('pname')||{}).textContent||'';const id=FULL2ID[nm]||Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');if(j){const ok=id&&S.pts&&(id in S.pts);j.dataset.jw=ok?id:'';j.style.display=ok?'':'none';}}drawJewels();},250);
 /* 대화 초상화: 이름 옆에 하트 병 */
 (function(){const pb=document.getElementById('pbox'),pn=document.getElementById('pname');if(pb&&pn&&!document.getElementById('pjw')){const row=document.createElement('div');row.className='pnrow';pn.parentNode.insertBefore(row,pn);const c=document.createElement('canvas');c.id='pjw';c.className='jwl';c.width=11;c.height=11;row.appendChild(c);row.appendChild(pn);}
   const st=document.createElement('style');st.textContent=`#pbox{--pw:150px;width:var(--pw)!important;padding:4px!important;box-sizing:border-box}
@@ -43,7 +43,12 @@ function workFacing(){const {qx,qy}=facing(),a=AREAS[S.area];if(!a||a.outdoor&&S
 function withNpcsAside(f){if(!workFacing())return f();const hid=[];for(const n of npcs)if(n.area===S.area&&!n.hidden){n.hidden=true;hid.push(n);}try{return f();}finally{for(const n of hid)n.hidden=false;}}
 {const _ac=action;action=function(){return withNpcsAside(()=>_ac.apply(this,arguments));};}
 {const _pk=peekLabel;peekLabel=function(){return withNpcsAside(()=>_pk.apply(this,arguments));};}
+/* 풀네임: 이름표·사람들 창·관계 카드 (대사 속 호칭은 그대로) */
+const FULLNAME={kairan:'카이런 아르젠트',roewen:'로웬 블릭',edmund:'에드먼드 헤일',marta:'마르타 그렌',brant:'브란트 코르',erena:'에레나 베르티에'};
+const FULL2ID=Object.fromEntries(Object.entries(FULLNAME).map(([k,v])=>[v,k]));
 /* 화자가 바뀌는 순간 초상화·이름·하트를 한 번에 (예전엔 하트가 0.25초 뒤에 따로 바뀌어 이름표가 늦게 맞춰졌음) */
-function syncPjw(){const pb=document.getElementById('pbox');if(!pb||pb.hidden)return;const nm=(document.getElementById('pname')||{}).textContent||'';const id=Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');
+function syncPjw(){const pb=document.getElementById('pbox');if(!pb||pb.hidden)return;const nm=(document.getElementById('pname')||{}).textContent||'';const id=FULL2ID[nm]||Object.keys(CH).find(k=>CH[k].name===nm&&k!=='eren');const j=document.getElementById('pjw');
   if(j){const ok=id&&S.pts&&(id in S.pts);j.dataset.jw=ok?id:'';j.style.display=ok?'':'none';}drawJewels();}
 {const _sl=showLine;showLine=function(){const r=_sl.apply(this,arguments);try{syncPjw();}catch(e){}return r;};}
+/* 사람들 창·관계 카드 이름에 성 붙이기 */
+{const _tpF=togglePanel;togglePanel=function(){const r=_tpF.apply(this,arguments);const p=document.getElementById('panel');if(p&&!p.hidden){for(const nm of p.querySelectorAll('.rel .nm,.soc .nm')){for(const t of nm.childNodes){if(t.nodeType!==3)continue;const v=t.textContent.trim();const id=Object.keys(FULLNAME).find(k=>CH[k]&&CH[k].name===v);if(id&&id!=='erena')t.textContent=FULLNAME[id];}}}return r;};}

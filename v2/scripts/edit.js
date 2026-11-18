@@ -50,7 +50,7 @@ function edWF(rm){const o=S&&S.roomWF&&S.roomWF[rm];return o||null;}
     const o=ED.sel;if(o){const ok=edValid(a,o);g.lineWidth=1.5;g.strokeStyle=ok?'#e0a030':'#d03030';g.setLineDash([3,2]);g.strokeRect(o.x*T+.75,o.y*T+.75,o.w*T-1.5,o.h*T-1.5);g.setLineDash([]);g.fillStyle=ok?'rgba(224,160,48,.15)':'rgba(208,48,48,.2)';g.fillRect(o.x*T,o.y*T,o.w*T,o.h*T);}}
   loop();})();
 function edInfo(t){const el=document.getElementById('edinfo');if(el)el.textContent=t;}
-function edName(o){return (o.nm?o.nm.replace(/([a-z])([A-Z])/g,'$1 $2'):(EDN[o.k]||o.k))+(o.oa?' · '+o.oa:'')+` (${o.w}×${o.h})`;}
+function edName(o){return (o.nm?o.nm:(EDN[o.k]||o.k))+(o.oa?' · '+o.oa:'')+` (${o.w}×${o.h})`;}
 /* 놓을 수 있는가: 방 안 바닥, 다른 가구와 겹치지 않음(러그 제외), 문 앞 막지 않음 */
 function edValid(a,o){const rm=edRoom(a,o.x,o.y+o.h-1);if(!rm)return false;const wallOK=o.k==='painting';
   for(let j=0;j<o.h;j++)for(let i=0;i<o.w;i++){const x=o.x+i,y=o.y+j;if(!edRoom(a,x,y)||edRoom(a,x,y)!==rm)return false;const c=a.map[y]&&a.map[y][x];if(c==null)return false;
@@ -86,21 +86,21 @@ const fk2k=t=>({bed:'bed',seat:t==='couch'?'sofa':t==='armchair'?'armchair':t===
 if(typeof FCAT!=='undefined'){const go=()=>{if(!FSH_OK){setTimeout(go,150);return;}for(const [k,src] of Object.entries(FCAT.sheets)){if(FSHEET[k])continue;const im=new Image();im.onload=()=>{FSHEET[k]={cols:16,src:'',img:im};};im.src=src;}};go();}
 const FS_=(pk,i,w,h,flip)=>({pk,i,w,h,flip:!!flip});
 {const _fs0=furnSprite0;furnSprite0=function(o,a){if(o&&o.pk!=null&&o.i!=null&&FSHEET[o.pk])return FS_(o.pk,o.i,o.sw,o.sh,o.fl);return _fs0(o,a);};}
-function fcObj(it,col){const [pk,nm,t,sw,sh,bw,bh,rot,i]=it,k=fk2k(t),onWall=['wall'].includes(fkind(t))||t==='sconce';return {k,pk:col||pk,i,i0:i,sw,sh,w:bw,h:bh,rot:(rot===4&&sw===1)?4:1,walk:(k==='rug'||onWall)?1:0,nm:nm};}
+function fcObj(it,col){const [pk,nm,t,sw,sh,bw,bh,rot,i]=it,k=fk2k(t),onWall=['wall'].includes(fkind(t))||t==='sconce';return {k,pk:col||pk,i,i0:i,sw,sh,w:bw,h:bh,rot:(rot===4&&sw===1)?4:1,walk:(k==='rug'||onWall)?1:0,nm:it[9]||nm};}
 function edCatalog(){const a=ED.a,el=document.getElementById('edcat');ED.fs=ED.fs||'all';ED.fk=ED.fk||'all';ED.q=ED.q||'';ED.col=ED.col||'';
   const game=[];{const sig=new Map();for(const ar of Object.values(AREAS)){if(ar.outdoor)continue;for(const o of (ar._orig0||ar.objs)){if(EDSKIP.has(o.k)||o.pk!=null)continue;const q=edClone(o);delete q.x;delete q.y;delete q.it;delete q.set;const k=JSON.stringify(q);if(!sig.has(k))sig.set(k,q);}}game.push(...sig.values());}
-  const all=(FCAT.items||[]).map((it,n)=>({n,it,kind:fkind(it[2]),set:it[0]==='OBR'?'OB':it[0],name:it[1]}));
+  const all=(FCAT.items||[]).map((it,n)=>({n,it,kind:fkind(it[2]),set:it[0]==='OBR'?'OB':it[0],name:it[1],ko:it[9]||it[1]}));
   const recent=()=>(S.edRecent||[]);
   const draw=()=>{const sets=FSETS.map(([k,l])=>`<button data-s="${k}" class="${ED.fs===k?'on':''}">${l}</button>`).join(''),kinds=ED.fs==='game'?'':FKIND.map(([k,l])=>`<button data-k="${k}" class="${ED.fk===k?'on':''}">${l}</button>`).join('');
     const cols=ED.fs==='OA'?`<div class="tabs"><span style="font-size:12px;align-self:center">색</span>${['','OA1','OA2','OA3','OA4'].map((c,j)=>`<button data-c="${c}" class="${ED.col===c?'on':''}">${['기본','와인','숲','장미','남색'][j]}</button>`).join('')}</div>`:'';
-    el.innerHTML=`<div class="hd"><input id="edq" placeholder="검색 (영문 이름)" value="${ED.q.replace(/"/g,'')}" style="flex:1;margin-right:6px;font:inherit;font-size:14px;padding:4px 6px;border:2px solid #c9a77a;min-width:0"><button id="edcx">닫기</button></div><div class="tabs">${sets}</div>${kinds?`<div class="tabs">${kinds}</div>`:''}${cols}<div class="grid"></div><div id="edcnt" style="font-size:12px;padding:2px 8px 6px;text-align:right"></div>`;
+    el.innerHTML=`<div class="hd"><input id="edq" placeholder="검색 (예: 침대, 램프, 보석)" value="${ED.q.replace(/"/g,'')}" style="flex:1;margin-right:6px;font:inherit;font-size:14px;padding:4px 6px;border:2px solid #c9a77a;min-width:0"><button id="edcx">닫기</button></div><div class="tabs">${sets}</div>${kinds?`<div class="tabs">${kinds}</div>`:''}${cols}<div class="grid"></div><div id="edcnt" style="font-size:12px;padding:2px 8px 6px;text-align:right"></div>`;
     const grid=el.querySelector('.grid');let list;
     if(ED.fs==='game')list=game.map(q=>({game:q}));
-    else{const R=recent();list=ED.fs==='recent'?R.map(n=>all[n]).filter(Boolean):all.filter(x=>ED.fs==='all'||x.set===ED.fs);if(ED.fk!=='all')list=list.filter(x=>x.kind===ED.fk);const q=ED.q.trim().toLowerCase();if(q)list=list.filter(x=>x.name.toLowerCase().includes(q));}
+    else{const R=recent();list=ED.fs==='recent'?R.map(n=>all[n]).filter(Boolean):all.filter(x=>ED.fs==='all'||x.set===ED.fs);if(ED.fk!=='all')list=list.filter(x=>x.kind===ED.fk);const q=ED.q.trim().toLowerCase();if(q)list=list.filter(x=>x.name.toLowerCase().includes(q)||x.ko.toLowerCase().includes(q)||x.ko.replace(/ /g,'').includes(q.replace(/ /g,'')));}
     el.querySelector('#edcnt').textContent=list.length+'개';
     const io=new IntersectionObserver(es=>{for(const e of es){if(!e.isIntersecting)continue;const d=e.target;io.unobserve(d);const x=d._x;let cvs=null;try{if(x.game){const o={...x.game,x:Math.floor(P.x/T),y:Math.floor(P.y/T)};const sp=furnSprite(o,a);if(sp)cvs=furnCanvas(sp);}else{const it=x.it;cvs=furnCanvas(FS_(ED.fs==='OA'&&ED.col?ED.col:it[0],it[8],it[3],it[4]));}}catch(err){}
       if(cvs){const c=document.createElement('canvas');c.width=cvs.width;c.height=cvs.height;c.getContext('2d').drawImage(cvs,0,0);const sc=Math.min(3,68/cvs.width,64/cvs.height);c.style.width=Math.round(cvs.width*sc)+'px';c.style.height=Math.round(cvs.height*sc)+'px';d.insertBefore(c,d.firstChild);}}},{root:grid});
-    for(const x of list){const d=document.createElement('div');d.className='it';d._x=x;const sp=document.createElement('span');sp.textContent=x.game?`${EDN[x.game.k]||x.game.k} ${x.game.w}×${x.game.h}`:`${x.name.replace(/([a-z])([A-Z])/g,'$1 $2').slice(0,18)}`;sp.title=x.game?'':x.name;d.appendChild(sp);
+    for(const x of list){const d=document.createElement('div');d.className='it';d._x=x;const sp=document.createElement('span');sp.textContent=x.game?`${EDN[x.game.k]||x.game.k} ${x.game.w}×${x.game.h}`:x.ko.slice(0,16);sp.title=x.game?'':x.name;d.appendChild(sp);
       d.onclick=()=>{el.style.display='none';if(x.game)return edPlace({...x.game});S.edRecent=[x.n,...recent().filter(n=>n!==x.n)].slice(0,24);edPlace(fcObj(x.it,ED.fs==='OA'&&ED.col?ED.col:null));};grid.appendChild(d);io.observe(d);}
     el.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ED.fs=b.dataset.s;if(ED.fs!=='OA')ED.col='';draw();});el.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ED.fk=b.dataset.k;draw();});el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ED.col=b.dataset.c;draw();});
     const qi=el.querySelector('#edq');qi.oninput=()=>{ED.q=qi.value;clearTimeout(ED._qt);ED._qt=setTimeout(()=>{const pos=qi.selectionStart;draw();const n=el.querySelector('#edq');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}},350);};el.querySelector('#edcx').onclick=()=>el.style.display='none';};
@@ -135,3 +135,14 @@ function edCancel(){const a=ED.a;a.objs=ED.snap.map(o=>({...o}));S.roomWF=JSON.p
   document.getElementById('edbar').style.display='none';document.getElementById('edcat').style.display='none';edBlk(a);buildArea(a);toast('바꾼 것을 버리고 나왔어요');}
 /* 고른 가구가 없을 땐 가구 버튼들을 흐리게 */
 setInterval(()=>{const r=document.getElementById('edsel');if(r)r.classList.toggle('off',!ED.sel);},250);
+/* 꾸미기로 옮긴 가구를 따라 NPC 자리(앉기·업무·눕기)도 같이 옮김 */
+const ACTS0={};for(const k in ACTS)if(Array.isArray(ACTS[k]))ACTS0[k]=ACTS[k].map(s=>s.slice());
+function edTagIds(a){if(a._eidTagged)return;(a._orig0||a.objs).forEach((o,i)=>{if(o._eid==null)o._eid=i;});a._eidTagged=1;}
+function edSyncSpots(a){const O=a._orig0;if(!O)return;const byId={};for(const o of a.objs)if(o._eid!=null)byId[o._eid]=o;
+  for(const k in ACTS0){if(ACTS_AREA[k]!==a.id)continue;const src=ACTS0[k],dst=ACTS[k];if(!dst)continue;
+    src.forEach((s,i)=>{let mv=null;for(const o of O){if(o.k==='rug'||o._eid==null)continue;if(s[0]>=o.x-1&&s[0]<=o.x+o.w&&s[1]>=o.y-1&&s[1]<=o.y+o.h){const n=byId[o._eid];if(!n){mv=null;break;}mv=[n.x-o.x,n.y-o.y];if(s[0]>=o.x&&s[0]<o.x+o.w&&s[1]>=o.y&&s[1]<o.y+o.h)break;}}
+      if(dst[i]){dst[i][0]=s[0]+(mv?mv[0]:0);dst[i][1]=s[1]+(mv?mv[1]:0);}});}
+  for(const n of npcs)if(n.area===a.id)n.cur=null;}
+{const _ee=edEnter;edEnter=function(){const a=AREAS[S.area];if(a&&!a.outdoor){if(!a._orig0)a._orig0=a.objs.map(edClone);edTagIds(a);for(const o of a.objs){if(o._eid==null){const j=a._orig0.findIndex(q=>q.k===o.k&&q.x===o.x&&q.y===o.y);if(j>=0)o._eid=a._orig0[j]._eid;}}}return _ee.apply(this,arguments);};}
+{const _ex=edExit;edExit=function(){const a=ED.a;const r=_ex.apply(this,arguments);try{edSyncSpots(a);}catch(e){}return r;};}
+{const _ap=edApply;edApply=function(a){const b=a._edv;_ap(a);if(a._edv!==b)try{edTagIds(a);edSyncSpots(a);}catch(e){}};}

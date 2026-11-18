@@ -5,7 +5,12 @@
   let lastBuild=performance.now();const realBuild=buildArea;let BOOTING=true;const dirty=new Set();
   /* 로딩 중에는 그림 시트가 도착할 때마다 지도를 다시 그리지 않고 모아 뒀다가, 다 도착하면 지역마다 한 번만 */
   buildArea=function(a){lastBuild=performance.now();if(BOOTING&&a&&a.id){dirty.add(a.id);return;}return realBuild.apply(this,arguments);};
-  function flush(){BOOTING=false;const cur=typeof S!=='undefined'&&S&&S.area;for(const id of dirty){const a=AREAS[id];if(!a)continue;realBuild(a);if(a.outdoor&&typeof SEAS_CACHE!=='undefined'&&typeof SEAS!=='undefined')SEAS_CACHE[id]={[SEAS]:{cv:a.cv,dyn:a.dyn,full:a.full}};}dirty.clear();if(cur&&AREAS[cur])A=AREAS[cur];lastBuild=performance.now();}
+  const lazy=new Set();
+  function buildOne(id){const a=AREAS[id];if(!a)return;const cur=typeof S!=='undefined'&&S&&S.area;realBuild(a);if(a.outdoor&&typeof SEAS_CACHE!=='undefined'&&typeof SEAS!=='undefined')SEAS_CACHE[id]={[SEAS]:{cv:a.cv,dyn:a.dyn,full:a.full}};if(cur&&AREAS[cur])A=AREAS[cur];}
+  /* 지금 있는 곳만 먼저 그리고, 나머지는 화면이 뜬 뒤 틈틈이 (들어가는 순간엔 바로) */
+  function flush(){BOOTING=false;const cur=typeof S!=='undefined'&&S&&S.area;if(cur&&dirty.has(cur)){buildOne(cur);dirty.delete(cur);}for(const id of dirty)lazy.add(id);dirty.clear();lastBuild=performance.now();
+    const step=()=>{if(!lazy.size)return;const c=typeof S!=='undefined'&&S&&S.area;const id=lazy.has(c)?c:lazy.values().next().value;lazy.delete(id);buildOne(id);(window.requestIdleCallback||setTimeout)(step,{timeout:200});};setTimeout(step,300);}
+  {const _dr=draw;draw=function(t){const c=typeof S!=='undefined'&&S&&S.area;if(c&&lazy.has(c)){lazy.delete(c);buildOne(c);}return _dr.apply(this,arguments);};}
   const ok=f=>{try{return !!f();}catch(e){return true;}};
   const checks=[()=>FSH_OK,()=>WFOK,()=>WF2OK,()=>TWOK,()=>W6N>=13,()=>FSHEET.OA&&FSHEET.OA.img,()=>Object.values(RP).every(r=>r.ok),()=>Object.values(HOE).every(r=>r.ok),()=>Object.values(SDVIMG).every(r=>r.ok),()=>Object.values(M4IMG).every(r=>r.ok!==false)];
   let t0=performance.now(),until=0,shown=true;
