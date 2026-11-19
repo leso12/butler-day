@@ -4025,13 +4025,14 @@ function draw(t){
         ctx.fillStyle='#3a2828';ctx.fillRect(sx-6+sd*2,sy-8,12,3);ctx.fillRect(sx-6+sd*2,sy-5,2,6);ctx.fillRect(sx+4+sd*2,sy-5,2,6);ctx.fillStyle='#8a5a34';ctx.fillRect(sx-5+sd*2,sy-8,10,1);}
       {const cut=backSeatCut(e,a);if(cut)ctx.drawImage(e.sp,0,0,16,e.sp.height-cut,sx-8,sy-e.sp.height+1,16,e.sp.height-cut);else ctx.drawImage(e.sp,sx-8,sy-e.sp.height+1);}
       if(e.n.dir===1&&!seat){ctx.fillStyle='#3a2828';ctx.fillRect(sx-6,sy-15,12,10);ctx.fillRect(sx-6,sy-5,2,6);ctx.fillRect(sx+4,sy-5,2,6);ctx.fillStyle='#7a4a2c';ctx.fillRect(sx-5,sy-14,10,8);ctx.fillStyle='#9a6038';ctx.fillRect(sx-5,sy-14,10,1);}   // 뒷모습: 등받이가 몸 앞에
+    }else if(typeof actDraw==='function'&&actDraw(ctx,e,sx,sy,t)){   /* 도구 동작 도트 (acts.js) */
     }else{ctx.drawImage(e.sp,sx-8,sy-e.sp.height+1);
       if(e.n&&e.sp.chest&&Math.sin(t/600+(ALL_IDS.indexOf(e.n.id)+1)*20)>0){const [y0,h]=e.sp.chest,s=17/16;   // NPC 숨쉬기 (NPC.cs): 가슴만 1/16 크게 덧그림
         ctx.drawImage(e.sp,4,y0,8,h,sx-4*s,sy-e.sp.height+1+y0+h/2+1-(h/2+1)*s,8*s,h*s);}}
     if(e.n&&e.n.pose==='read'&&e.n.dir!==1){const bx=sx+(e.n.dir===2?-7:e.n.dir===3?3:-2),by=sy-11;ctx.fillStyle='#7a2c3a';ctx.fillRect(bx,by,5,4);ctx.fillStyle='#f4efe4';ctx.fillRect(bx+1,by+1,3,2);}
     if(e.n&&e.n.pose==='read'&&e.n.dir===1&&Math.floor(t/900)%2){ctx.fillStyle='#f4efe4';ctx.fillRect(sx-1,sy-34,3,2);}
     if(!e.n&&S.carry)drawCarry(sx,sy,P.dir,S.carry);
-    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&(!tk||ps==='write')){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
+    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&!e.actArt&&(!tk||ps==='write')){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
     if(SCENE&&SCENE.emo&&performance.now()-SCENE.emo.t<1600&&((e.n&&SCENE.emo.id===e.n.id)||(!e.n&&SCENE.emo.id==='me'))){drawEmote(sx,sy+(e.n&&CH[e.n.id].small?6:0),SCENE.emo.ch,t);continue;}
     if(e.n&&SCENE)continue;
     if(e.n){const by=sy-(CH[e.n.id].small||e.n.id==='peter'?28:38)+Math.round(Math.sin(t/300)*1),id=e.n.id;

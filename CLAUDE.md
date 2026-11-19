@@ -37,6 +37,7 @@ cp v2/game/eren.html index.html     # Pages가 보여 주는 파일. 반드시 �
 | edit.js / edit_out.js | 꾸미기 모드(실내 가구·벽지 / 바깥 칠하기), 저장·저장 안 하고 나가기·내보내기 |
 | furncat_data.js | 꾸미기 가구 목록 736종(한글 이름 포함, `v2/build/furncat_build.py`·`fname_ko.py`) |
 | story2.js | 원작에서 빠졌던 장(9·13~14·26~27·38~46·53~54장) 이벤트 + 결말의 날(112일) |
+| acts.js / acts_data.js | 도구 동작 도트 41프레임(빗자루·먼지떨이·검술·장작·무기 손질·말 솔질·빨래·바느질·물주기). 같은 체형 NPC는 옷 색만 바꿔 씀, 체형이 다르면 sdv.js의 옛 도구 그림 (`v2/build/acts_build.py`) |
 | boot.js | 준비 화면, 로딩 중 지도 다시 그리기 모으기, 나머지 지역은 화면이 뜬 뒤 틈틈이 그리기 |
 
 ## 핵심 규칙 (사용자와 정한 것)
