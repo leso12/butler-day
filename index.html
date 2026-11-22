@@ -3241,7 +3241,8 @@ function gsLong(cv,N,xs){   // 바닥에 다리 뻗기: 정강이 칸을 N줄 �
   c.chest=cv.chest;c.eyeY=cv.eyeY;c.ox=0;return c;}
 function spr2(id,dir,fk){
   const key=id+'|'+dir+'|'+fk;if(SP2C[key])return SP2C[key];
-  if(dir===2){const src=spr2(id,3,fk),W=src.width,c=mk(W,src.height),g=c.getContext('2d');g.scale(-1,1);g.drawImage(src,-W,0);c.chest=src.chest;c.eyeY=src.eyeY;c.ox=W-16;return SP2C[key]=c;}
+  if(dir===2){const src=spr2(id,3,fk),W=src.width,c=mk(W,src.height),g=c.getContext('2d');g.scale(-1,1);g.drawImage(src,-W,0);c.chest=src.chest;c.eyeY=src.eyeY;c.ox=W-16;if(src.hand)c.hand=[W-1-src.hand[0],src.hand[1]];c.armp=src.armp;return SP2C[key]=c;}
+  let ARMP=null;if(fk.includes('~')){const q=fk.split('~');fk=q[0];ARMP=q[1];}else if(fk==='ah'||fk==='am'){ARMP=fk;fk='i0';}   /* 먹기·마시기: 손을 가슴께(ah)·입가(am)로 */
   let sp=SP2[id]||SP2.v_merch;const WR=!!(sp.wear&&CLO_N>=Object.keys(CLO_SRC).length),WEAR=sp.wear||{};if(WR)sp=Object.assign({},sp,{fit:'asset',low:'pants',c:Object.assign({},sp.c,WEAR.c||{})});
   const cc=sp.c,kid=sp.body==='kid',fem=sp.body==='f'||!!sp.fem,sex=PBODY[id]||(fem?'fT|Slim_B':kid?'m|Slim_M':'mT|Slim_M');
   const side=dir===3||dir===2,back=dir===1,fwd=dir===3?1:dir===2?-1:0,ht=kid?'kid':'';
@@ -3304,6 +3305,38 @@ function spr2(id,dir,fk){
     if(hold){const mv=[];for(const [x,y,c] of AC){const sideOk=hold==='R'?x>=8:hold==='L'?x<8:true;if(!sideOk)continue;mv.push([x,y,c]);}
       const dx=hold==='R'||hold==='F'?1:-1,n=hold==='R'||hold==='L'?2:3;   // 팔을 그쪽으로 늘여 뻗음 (원래 칸은 그대로 두고 이어 붙임)
       for(const [x,y,c] of mv.sort((p,q)=>dx*(q[0]-p[0])))for(let k=1;k<=n;k++){const lift=side&&k===n?1:0;if(c.c==='g'||k<n)put(x+dx*k,y-lift,c);}}}
+  /* 먹기·마시기 팔: 원래 팔(소매→소맷부리→손) 칸 순서를 그대로 새 길로 옮겨 그려, 옷 색·명암·외곽선이 평소와 같게 */
+  let HND=null;
+  if(ARMP&&!back){const isH=c=>c&&c.arm&&c.c==='g';
+    /* 지운 팔 자리: 몸통 안쪽이면 옆 몸통 칸으로 메우고, 몸 바깥이면 비움 (몸이 옆으로 튀어나오지 않게) */
+    const bod=(x,y)=>x>=0&&x<16&&G[y][x]&&!G[y][x].arm&&'tbB'.includes(G[y][x].c);
+    const bodY=(x,y)=>y>=0&&y<32&&bod(x,y);const fillUnder=(x,y)=>{let l=null,r=null,u=null,dn=null;for(let d=1;d<6;d++){if(!l&&bod(x-d,y))l=G[y][x-d];if(!r&&bod(x+d,y))r=G[y][x+d];if(!u&&bodY(x,y-d))u=G[y-d][x];if(!dn&&bodY(x,y+d))dn=G[y+d][x];}const src=l&&r?(l.t>r.t?l:r):u&&dn?(u.c==='t'?u:dn):null;G[y][x]=src?{...src,arm:false}:null;
+      if(!src){/* 몸 가장자리가 된 칸은 외곽선으로 */for(const xx of [x-1,x+1])if(bod(xx,y)&&!(bod(xx-1,y)&&bod(xx+1,y)))G[y][xx]={...G[y][xx],t:0};}};
+    let sh0=-1;for(let y=0;y<32&&sh0<0;y++)if(G[y].some(c=>c&&c.c==='t'&&!c.arm))sh0=y;
+    let chinY=sh0-1;for(let y=sh0-1;y>0;y--)if(G[y].some(c=>c&&c.c==='s'&&!c.arm)){chinY=y;break;}
+    /* 옮길 팔: 정면은 화면 오른쪽 팔, 옆모습은 등 쪽 팔의 칸 순서를 빌려 몸 앞쪽에 그림 */
+    const clu=(f)=>{const R={};for(let y=0;y<32;y++)for(let x=0;x<16;x++){const c=G[y][x];if(c&&c.arm&&f(x))(R[y]=R[y]||[]).push([x,c]);}return R;};
+    const CR=clu(x=>x>=8),CL=clu(x=>x<8),src=side?CL:CR,ys=Object.keys(src).map(Number).sort((p,q)=>p-q);
+    if(ys.length>3){const keepY=side?99:ys[0]+3;
+      const seq=[];for(const y of ys){if(y<keepY&&!side)continue;const f=src[y].filter(([x,c])=>c.t>0).sort((p,q)=>side?p[0]-q[0]:q[0]-p[0]);if(f.length)seq.push(f.map(e=>e[1]));}
+      /* 지우기: 정면은 오른팔 아랫부분, 옆모습은 앞에 보이던 손 */
+      for(const y of ys)for(const [x] of src[y])if(!side&&y>=keepY)fillUnder(x,y);
+      if(side){for(const y in CR)for(const [x] of CR[y])fillUnder(x,+y);for(const y of ys)if(y>=ys[0]+3)for(const [x] of CL[y])fillUnder(x,y);}
+      let fx=-1;for(let y=0;y<sh0;y++)G[y].forEach((c,x)=>{if(c&&c.c==='s')fx=Math.max(fx,x);});
+      let E0,E1;
+      if(!side){const xa=Math.max(...src[ys[0]+2].map(e=>e[0]));E0=[xa-1,keepY];E1=ARMP==='am'?[9,chinY]:[xa-4,keepY+1];}
+      else{E0=[sh0>0?Math.min(fx-2,10):10,sh0+3];E1=ARMP==='am'?[fx,chinY]:[fx+1,sh0+4];}
+      const line=[];{let [x,y]=E0;const [x1,y1]=E1,dx=Math.abs(x1-x),dy=-Math.abs(y1-y),sx=x<x1?1:-1,sy=y<y1?1:-1;let er=dx+dy;for(let k=0;k<40;k++){line.push([x,y]);if(x===x1&&y===y1)break;const e2=2*er;if(e2>=dy){er+=dy;x+=sx;}if(e2<=dx){er+=dx;y+=sy;}}}
+      const nH=seq.filter(r=>r.some(isH)).length||1,sl=seq.filter(r=>!r.some(isH)),hr=seq.filter(r=>r.some(isH));
+      const kinds=[];const nS=Math.max(1,line.length-Math.min(nH,2));for(let i=0;i<nS;i++)kinds.push(sl.length?sl[Math.min(sl.length-1,Math.floor(i*sl.length/nS))]:hr[0]);
+      for(let i=0;kinds.length<line.length;i++)kinds.push(hr[Math.min(hr.length-1,i)]||kinds[kinds.length-1]);
+      const ST=new Map(),put=(x,y,c)=>{if(x>=0&&x<16&&y>=0&&y<32)ST.set(x+','+y,{...c,arm:true});};
+      line.forEach(([x,y],i)=>{const r=kinds[i];put(x,y,r[0]);if(r.some(isH)){put(x+(side?1:-1),y,r[1]||r[0]);}});
+      /* 외곽선: 새 팔 둘레 */
+      const OL=[];for(const k of ST.keys()){const [x,y]=k.split(',').map(Number);for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]]){const q=(x+ax)+','+(y+ay);if(!ST.has(q))OL.push([x+ax,y+ay,ST.get(k)]);}}
+      for(const [x,y,c] of OL)if(x>=0&&x<16&&y>=0&&y<32){const o=G[y][x];if(o&&o.c==='s'&&y<sh0&&!(ARMP==='am'))continue;G[y][x]={...c,t:0,arm:true};}
+      for(const [k,c] of ST){const [x,y]=k.split(',').map(Number);G[y][x]=c;}
+      const L1=line[line.length-1];HND=[L1[0]+(side?1:0),L1[1]];}}
   /* 눈 깜빡임: 눈동자·흰자 → 피부, 맨 아랫줄은 속눈썹 */
   if(fk==='bl'){let ly=-1;for(let y=0;y<32;y++)for(const c of G[y])if(c&&(c.c==='i'||c.c==='e'))ly=y;
     for(let y=0;y<32;y++)for(const c of G[y])if(c&&(c.c==='i'||c.c==='e'||(c.c==='l'&&y<ly))){if(y===ly&&c.c!=='l'){c.c='l';c.t=0;}else{c.c='s';c.t=c.bt=15;}}}
@@ -3500,13 +3533,13 @@ function spr2(id,dir,fk){
     if(s0>=0&&WEAR.btn){for(let y=s0+2;y<s0+8;y+=2){px(side?cx:cx-1,y,WEAR.btn);}}}   // 단추
   {const H=R.hair,HC=[mix(H.o,H.d,.45),H.d,H.b,mix(H.b,H.l,.5),H.l,mix(H.l,'#ffffff',.25),mix(H.l,'#ffffff',.5)].map(rgb);
     for(let i=0;i<512;i++){if(P.z[i]!==HZ2||HL[i]<0||P.ov[i])continue;const c=HC[HL[i]];d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=255;}}
-  g.putImageData(im,0,0);cv.chest=sit?null:fem?[sh+2,4]:[sh+1,8];cv.eyeY=eyeY;
+  g.putImageData(im,0,0);cv.chest=sit?null:fem?[sh+2,4]:[sh+1,8];cv.eyeY=eyeY;cv.hand=HND;cv.armp=ARMP;
   const adult=!fem&&!kid,la=tall&&ft>hip+3?(LEG_ADD[id]!=null?LEG_ADD[id]:LEG_M):0,ta=adult&&hip>sh+2?TORSO_M:0;   // 앉아도 상체는 같이 늘림
   if(la>0||ta>0){   // 키 늘이기: 상체(어깨~엉덩이)·다리(엉덩이~발) 줄을 고르게 복제. 손이 있는 줄은 피해서 손 모양 유지
     const hand=y=>G[y].some(c=>c&&c.c==='g'),pick=(a,b,n)=>{const ok=[];for(let y=a;y<=b;y++)if(!hand(y))ok.push(y);const r={};for(let k=0;k<n&&ok.length;k++){const y=ok[Math.floor((k+.5)*ok.length/n)];r[y]=(r[y]||0)+1;}return r;};
     const D=Object.assign({},pick(sh+1,hip-2,ta));for(const [y,c] of Object.entries(pick(hip+1,ft-2,la)))D[y]=(D[y]||0)+c;
     const rows=[];for(let y=0;y<32;y++){rows.push(y);for(let k=0;k<(D[y]||0);k++)rows.push(y);}
-    const c2=mk(16,rows.length),g2=c2.getContext('2d');rows.forEach((y,i)=>g2.drawImage(cv,0,y,16,1,0,i,16,1));c2.chest=cv.chest;c2.eyeY=cv.eyeY;return SP2C[key]=gsN?gsLong(c2,gsN,gsX):c2;}
+    const c2=mk(16,rows.length),g2=c2.getContext('2d');rows.forEach((y,i)=>g2.drawImage(cv,0,y,16,1,0,i,16,1));c2.chest=cv.chest;c2.eyeY=cv.eyeY;if(HND)c2.hand=[HND[0],rows.indexOf(HND[1])];c2.armp=ARMP;return SP2C[key]=gsN?gsLong(c2,gsN,gsX):c2;}
   return SP2C[key]=gsN?gsLong(cv,gsN,gsX):cv;   // 숨쉬기용 가슴 영역 (NPC.cs: 남 y17 h8 / 여 y18 h4)
 }
 /* 어떤 프레임을 그릴지: 이동 중엔 걷기/달리기, 서 있으면 숨쉬기와 가끔 깜빡임 */
@@ -4003,7 +4036,7 @@ function draw(t){
   if(S.area==='town'&&SEAS!=='겨울')drawDucks(ctx,cx,cy,t);
   drawForage(cx,cy,t);farmGround(cx,cy,t);farmTick();
   const tnow=performance.now();
-  const ents=[...here.map((n,i)=>({x:n.x,y:n.y,sp:spr(sprOf(n.id),n.dir,AFF&&AFF.n===n&&tnow-AFF.t0>350&&tnow-AFF.t0<(AFF.k==='hug'?1750:1550)?(AFF.k==='hug'?'hgN':'k'):S.walk&&S.walk.id===n.id?holdKey(n,0):animKey({pose:n.pose,moving:(!!(n.path&&n.path.length)&&!n.scene)||!!n.cueMv||(S.walk&&S.walk.id===n.id&&n.moving),anim:n.anim||0,dir:n.dir,npc:1},tnow,ALL_IDS.indexOf(n.id)+1)),n})),...(P.pose==='bed'?[]:[{x:P.x,y:P.y,pl:1,sp:spr(pid(),P.dir,AFF&&tnow-AFF.t0>350&&tnow-AFF.t0<(AFF.k==='hug'?1750:1550)?(AFF.k==='hug'?'hg':'k'):S.walk?holdKey(null,1):animKey({pose:P.pose==='dsit'?'dsit':P.pose==='sit'||P.pose==='write'||P.pose==='tea'||P.kneel?'sit':null,moving:P.moving,running:P.running,anim:P.anim,dir:P.dir},tnow,0))}])];
+  const ents=[...here.map((n,i)=>({x:n.x,y:n.y,sp:spr(sprOf(n.id),n.dir,AFF&&AFF.n===n&&tnow-AFF.t0>350&&tnow-AFF.t0<(AFF.k==='hug'?1750:1550)?(AFF.k==='hug'?'hgN':'k'):S.walk&&S.walk.id===n.id?holdKey(n,0):animKey({pose:n.pose,moving:(!!(n.path&&n.path.length)&&!n.scene)||!!n.cueMv||(S.walk&&S.walk.id===n.id&&n.moving),anim:n.anim||0,dir:n.dir,npc:1},tnow,ALL_IDS.indexOf(n.id)+1)),n})),...(P.pose==='bed'?[]:[{x:P.x,y:P.y,pl:1,sp:spr(pid(),P.dir,AFF&&tnow-AFF.t0>350&&tnow-AFF.t0<(AFF.k==='hug'?1750:1550)?(AFF.k==='hug'?'hg':'k'):S.walk?holdKey(null,1):animKey({pose:P.pose==='dsit'?'dsit':P.pose==='tea'||P.pose==='drink'?P.pose:P.pose==='sit'||P.pose==='write'||P.kneel?'sit':null,moving:P.moving,running:P.running,anim:P.anim,dir:P.dir},tnow,0))}])];
   for(let i=DUST.length-1;i>=0;i--){const d=DUST[i];d.t+=1/60;d.x+=d.vx/60;if(d.t>.45){DUST.splice(i,1);continue;}const r=1+d.t*5;ctx.fillStyle=`rgba(230,222,206,${.55*(1-d.t/.45)})`;ctx.fillRect(Q(d.x-cx-r/2),Q(d.y-cy-r/2-d.t*6),Math.ceil(r),Math.ceil(r*.7));}
   for(const c of catsHere())ents.push({x:c.x,y:c.y,cat:c});
   for(const d of a.dyn)if(d.x1>cx&&d.x0<cx+VW&&d.y1>cy&&d.y0<cy+VH)ents.push({y:d.sy,obj:d});
@@ -4036,7 +4069,7 @@ function draw(t){
     if(e.n&&e.n.pose==='read'&&e.n.dir!==1){const bx=sx+(e.n.dir===2?-7:e.n.dir===3?3:-2),by=sy-11;ctx.fillStyle='#7a2c3a';ctx.fillRect(bx,by,5,4);ctx.fillStyle='#f4efe4';ctx.fillRect(bx+1,by+1,3,2);}
     if(e.n&&e.n.pose==='read'&&e.n.dir===1&&Math.floor(t/900)%2){ctx.fillStyle='#f4efe4';ctx.fillRect(sx-1,sy-34,3,2);}
     if(!e.n&&S.carry)drawCarry(sx,sy,P.dir,S.carry);
-    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&!e.actArt&&(!tk||ps==='write')){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
+    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&!e.actArt&&(!tk||ps==='write'||((ps==='tea'||ps==='drink')&&e.sp.hand))){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
     if(SCENE&&SCENE.emo&&performance.now()-SCENE.emo.t<1600&&((e.n&&SCENE.emo.id===e.n.id)||(!e.n&&SCENE.emo.id==='me'))){drawEmote(sx,sy+(e.n&&CH[e.n.id].small?6:0),SCENE.emo.ch,t);continue;}
     if(e.n&&SCENE)continue;
     if(e.n){const by=sy-(CH[e.n.id].small||e.n.id==='peter'?28:38)+Math.round(Math.sin(t/300)*1),id=e.n.id;
@@ -6658,6 +6691,58 @@ function actDraw(g,e,sx,sy,t){e.actArt=0;const n=e.n;if(!n||!ACTA.ready||SCENE)r
   const fr=actFrames(n.id,ps);if(!fr)return false;const c=fr[Math.floor(t/def.dur+(ALL_IDS.indexOf(n.id)+1)*1.7)%def.n],y=sy-fr.h+1-8;
   if(n.dir===2){g.save();g.translate(sx,0);g.scale(-1,1);g.drawImage(c,-16,y);g.restore();}else g.drawImage(c,sx-16,y);
   e.actArt=1;return true;}
+
+/* ── 먹기·마시기: 손에 든 찻잔·맥주잔·와인잔·빵 등을 실제 팔 동작(손을 가슴께 ↔ 입가)과 함께 ──
+   앉아서: pose 'tea' / 서서: pose 'drink'. 무엇을 드는지는 n.item · P.item · SCENE.item, 없으면 자리 이름으로 고른다. */
+const EAT_CYC=4200,EAT_SIP=850;
+function eatPh(t,seed){return ((t+seed*1311)%EAT_CYC)<EAT_SIP?'am':'ah';}
+const DRINKS=new Set(['tea','beer','wine','milk','cocoa']);
+function spotItem(cur){if(!cur)return null;if(/tavern|tav_?t/.test(cur))return 'beer';if(/party/.test(cur))return 'wine';if(/_dine/.test(cur))return 'stew';if(/_eat/.test(cur))return 'bread';if(/c_tea/.test(cur))return 'tea';if(/bakery/.test(cur))return 'bread';return null;}
+function roomItem(rm){if(!rm)return null;if(/tavern|tav_t/.test(rm))return 'beer';if(/bakery/.test(rm))return 'bread';if(/tea_in|library|butler|parlor|flower_in|servants|myroom|kbed/.test(rm))return 'tea';if(/kitchen/.test(rm))return 'stew';if(/ballroom/.test(rm))return 'wine';return null;}
+function itemOf(e){if(e.pl)return P.eatIt||P.item||(SCENE&&SCENE.item)||'tea';const n=e.n;return (n&&n.item)||(SCENE&&n&&n.scene&&SCENE.item)||spotItem(n&&n.cur)||'tea';}
+const ITEM_OF_FOOD=it=>{const n=(ITEMS[it]&&ITEMS[it].n)||'';return /파이|타르트/.test(n)?'pie':/쿠키|과자/.test(n)?'cookie':/딸기|베리|산딸기/.test(n)?'berry':/부추|뿌리/.test(n)?'herb':/우유/.test(n)?'milk':/차/.test(n)?'tea':'bread';};
+/* 손에 든 물건 (스듀풍 작은 도트). hx,hy = 손 칸의 화면 좌표, sip = 입가 프레임, f = 1 오른쪽 / -1 왼쪽을 향함, fr = 정면 */
+function drawHeld(g,x,y,k,sip,f,fr,t){const R=(c,a,b,w,h)=>{g.fillStyle=c;g.fillRect(a,b,w,h);};const by=y;   /* by = 물건 바닥 (손 윗줄) */
+  if(k==='tea'){if(!sip)R('#d8d2c6',x-2,by,5,1);R('#fbf8f2',x-1,by-2,3,2);R('#b88a5a',x-1,by-2,3,1);R('#d8d2c6',x+1+(f<0?-3:0),by-2,1,1);if(!sip&&Math.random()<.02)STEAM.push({x:x,y:by-4,t:0,s:1});return;}
+  if(k==='milk'||k==='cocoa'){R('#e8e2d6',x-1,by-3,3,3);R(k==='milk'?'#fbfaf6':'#8a5a3a',x-1,by-3,3,1);R('#7a98b8',x-1,by-1,3,1);return;}
+  if(k==='beer'){R('#b07a30',x-1,by-4,3,4);R('#e0a848',x-1,by-3,2,3);R('#fbf4e0',x-1,by-5,3,1);R('#8a5a2a',x+(f<0?-2:2),by-3,1,2);return;}
+  if(k==='wine'){R('#dfe6ee',x,by-1,1,1);R('#dfe6ee',x-1,by,3,1);R('#8a2a3a',x-1,by-3,3,2);R('#eef2f6',x-1,by-4,3,1);return;}
+  if(k==='stew'){if(sip){R('#c8ccd4',x,by-1,1,2);R('#e8ecf0',x-1,by-2,2,1);}else{R('#6a4430',x-2,by-1,5,2);R('#c8703a',x-1,by-2,3,1);R('#8a5a3a',x-2,by-2,1,1);R('#8a5a3a',x+2,by-2,1,1);if(Math.random()<.02)STEAM.push({x:x,y:by-4,t:0,s:1});}return;}
+  if(k==='pie'){R('#a04a3a',x-1,by-2,3,2);R('#e0b070',x-2,by-1,4,1);R('#f0c88a',x-1,by-3,2,1);return;}
+  if(k==='cookie'){R('#b8783a',x-1,by-2,3,2);R('#d8a060',x-1,by-2,2,1);R('#6a3a2a',x,by-1,1,1);return;}
+  if(k==='cake'){R('#f6ece0',x-1,by-2,3,2);R('#e8a0b4',x-1,by-3,3,1);R('#c84a5a',x,by-4,1,1);return;}
+  if(k==='berry'){R('#b0304a',x-1,by-2,2,2);R('#e86a7a',x-1,by-2,1,1);R('#4a8a3a',x,by-3,1,1);return;}
+  if(k==='herb'){R('#5a9a4a',x-1,by-3,1,3);R('#7aba5a',x,by-4,1,4);return;}
+  if(k==='skewer'){R('#a8845a',x,by-5,1,5);R('#a85a3a',x-1,by-4,3,1);R('#c87a4a',x-1,by-2,3,1);return;}
+  /* 빵 */R('#b8783a',x-2,by-2,4,2);R('#e0a860',x-2,by-3,4,1);R('#f0c88a',x-1,by-3,2,1);}
+function heldFX(g,sx,sy,d,sd,t,e){const sp=e&&e.sp;if(!sp||!sp.hand)return false;const k=itemOf(e),sip=sp.armp==='am';
+  const x=sx-8+sp.hand[0],y=sy-sp.height+1+sp.hand[1],f=d===2?-1:1;drawHeld(g,x,y,k,sip,f,d===0,t);
+  if(sip&&!DRINKS.has(k)&&k!=='stew'&&Math.random()<.04&&typeof DUST!=='undefined'&&DUST.length<40)DUST.push({x:x+(Math.random()-.5)*3,y:y+1,t:0,vx:(Math.random()-.5)*6});
+  return true;}
+{const _tea=POSEFX.tea;POSEFX.tea=function(g,sx,sy,d,sd,t,e){if(heldFX(g,sx,sy,d,sd,t,e))return;if(d===1)return;return _tea(g,sx,sy,d,sd,t,e);};}
+POSEFX.drink=function(g,sx,sy,d,sd,t,e){heldFX(g,sx,sy,d,sd,t,e);};
+/* 프레임 고르기: 앉아서 먹기 'sit~ah|am', 서서 'ah|am'. 뒷모습은 팔이 안 보이니 평소대로 */
+{const _ak=animKey;animKey=function(o,t,seed){const ps=o.pose;
+  if((ps==='tea'||ps==='drink')&&!o.moving){const seated=ps==='tea';if(o.dir===1)return seated?'sit':_ak(Object.assign({},o,{pose:null}),t,seed);
+    const ph=(!o.npc&&P.eatT)?eatSeq(t):eatPh(t,seed||0);return (seated?'sit~':'')+ph;}
+  if(ps==='drink'&&o.moving)return _ak(Object.assign({},o,{pose:null}),t,seed);
+  return _ak(o,t,seed);};}
+/* 플레이어가 가방에서 먹을 때 (스듀처럼): 들어 올렸다가 입으로 몇 번 */
+function eatSeq(t){const k=performance.now()-P.eatT;return (k>350&&((k-350)%520)<300)?'am':'ah';}
+{const _use=useItem;useItem=function(it){const I=ITEMS[it];if(!I||!I.food||!S.inv[it]||busy||D||SCENE)return _use(it);
+  const k=ITEM_OF_FOOD(it),pv=P.pose;_use(it);const pn=$('#panel');if(pn)pn.hidden=true;if(typeof panelKind!=='undefined')panelKind=null;
+  busy=true;P.pose='drink';P.eatIt=k;P.eatT=performance.now();if(P.dir===1)P.dir=0;
+  setTimeout(()=>{P.pose=pv==='drink'?null:pv;P.eatIt=null;P.eatT=0;busy=false;},1700);};}
+/* 앉아 있는 NPC: 식당·하인 식당 식사 시간, 선술집, 찻집, 빵집, 연회 자리에서는 실제로 먹고 마신다 */
+setInterval(()=>{try{if(!S||!npcs)return;for(const n of npcs){if(n.scene||n.hidden)continue;const it=spotItem(n.cur);
+  if(n.pose==='sit'&&it){n.pose='tea';n.item=it;n._amb=1;}
+  else if(n.pose==='stand'&&it&&/_eat/.test(n.cur||'')){n.pose='drink';n.item=it;n._amb=1;}
+  else if(n._amb&&(!it||(n.pose!=='tea'&&n.pose!=='drink'))){if(n.pose==='tea')n.pose='sit';else if(n.pose==='drink')n.pose='stand';n._amb=0;n.item=null;}}}catch(e){}},500);
+/* 데이트(마주 앉아 차 마시기)는 장소에 맞는 것, 선술집 장면에서는 다 같이 맥주잔 */
+{const _adp=applyDatePose;applyDatePose=function(){_adp();if(!SCENE)return;let rm=null;try{rm=roomAt(...tileOf(P));}catch(e){}
+  if(P.pose==='tea'){SCENE.item=roomItem(rm)||'tea';return;}
+  if(rm&&/tavern|tav_t/.test(rm)&&!P.pose){SCENE.item='beer';SCENE.drinkers=[];P.pose='drink';for(const id of SCENE.cast||[]){const n=npcs.find(m=>m.id===id);if(n&&n.pose==='stand'){n.pose='drink';SCENE.drinkers.push(n);}}}};}
+{const _es=endScene;endScene=function(){const sc=SCENE;if(sc&&sc.drinkers){for(const n of sc.drinkers)if(n.pose==='drink')n.pose='stand';if(P.pose==='drink')P.pose=null;}return _es.apply(this,arguments);};}
 
 /* ═════════ 준비 화면: 그림 시트·지도 다시 그리기가 모두 끝난 뒤에 화면을 보여 줌 (이어하기 렉 방지) ═════════ */
 (function(){const st=document.createElement('style');st.textContent=`#bootov{position:fixed;inset:0;z-index:9999;background:#2a1c19;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#f4ead8;font-family:inherit;transition:opacity .35s}

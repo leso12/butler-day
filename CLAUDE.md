@@ -38,6 +38,7 @@ cp v2/game/eren.html index.html     # Pages가 보여 주는 파일. 반드시 �
 | furncat_data.js | 꾸미기 가구 목록 736종(한글 이름 포함, `v2/build/furncat_build.py`·`fname_ko.py`) |
 | story2.js | 원작에서 빠졌던 장(9·13~14·26~27·38~46·53~54장) 이벤트 + 결말의 날(112일) |
 | acts.js / acts_data.js | 도구 동작 도트 41프레임(빗자루·먼지떨이·검술·장작·무기 손질·말 솔질·빨래·바느질·물주기). 같은 체형 NPC는 옷 색만 바꿔 씀, 체형이 다르면 sdv.js의 옛 도구 그림 (`v2/build/acts_build.py`) |
+| eat.js | 먹기·마시기: 팔을 가슴께(`ah`)↔입가(`am`)로 옮긴 프레임(spr2의 `ARMP`, 앉기는 `sit~ah`) + 손에 든 찻잔·맥주·와인·빵·스튜 등. 앉아서=pose `tea`, 서서=pose `drink`. 물건은 `n.item`/`P.item`/`SCENE.item`, 없으면 자리 이름(식사·선술집·찻집·빵집·연회)으로. 가방에서 음식 먹기 동작, 선술집 장면 맥주잔 |
 | boot.js | 준비 화면, 로딩 중 지도 다시 그리기 모으기, 나머지 지역은 화면이 뜬 뒤 틈틈이 그리기 |
 
 ## 핵심 규칙 (사용자와 정한 것)

@@ -3238,7 +3238,8 @@ function gsLong(cv,N,xs){   // 바닥에 다리 뻗기: 정강이 칸을 N줄 �
   c.chest=cv.chest;c.eyeY=cv.eyeY;c.ox=0;return c;}
 function spr2(id,dir,fk){
   const key=id+'|'+dir+'|'+fk;if(SP2C[key])return SP2C[key];
-  if(dir===2){const src=spr2(id,3,fk),W=src.width,c=mk(W,src.height),g=c.getContext('2d');g.scale(-1,1);g.drawImage(src,-W,0);c.chest=src.chest;c.eyeY=src.eyeY;c.ox=W-16;return SP2C[key]=c;}
+  if(dir===2){const src=spr2(id,3,fk),W=src.width,c=mk(W,src.height),g=c.getContext('2d');g.scale(-1,1);g.drawImage(src,-W,0);c.chest=src.chest;c.eyeY=src.eyeY;c.ox=W-16;if(src.hand)c.hand=[W-1-src.hand[0],src.hand[1]];c.armp=src.armp;return SP2C[key]=c;}
+  let ARMP=null;if(fk.includes('~')){const q=fk.split('~');fk=q[0];ARMP=q[1];}else if(fk==='ah'||fk==='am'){ARMP=fk;fk='i0';}   /* 먹기·마시기: 손을 가슴께(ah)·입가(am)로 */
   let sp=SP2[id]||SP2.v_merch;const WR=!!(sp.wear&&CLO_N>=Object.keys(CLO_SRC).length),WEAR=sp.wear||{};if(WR)sp=Object.assign({},sp,{fit:'asset',low:'pants',c:Object.assign({},sp.c,WEAR.c||{})});
   const cc=sp.c,kid=sp.body==='kid',fem=sp.body==='f'||!!sp.fem,sex=PBODY[id]||(fem?'fT|Slim_B':kid?'m|Slim_M':'mT|Slim_M');
   const side=dir===3||dir===2,back=dir===1,fwd=dir===3?1:dir===2?-1:0,ht=kid?'kid':'';
@@ -3301,6 +3302,38 @@ function spr2(id,dir,fk){
     if(hold){const mv=[];for(const [x,y,c] of AC){const sideOk=hold==='R'?x>=8:hold==='L'?x<8:true;if(!sideOk)continue;mv.push([x,y,c]);}
       const dx=hold==='R'||hold==='F'?1:-1,n=hold==='R'||hold==='L'?2:3;   // 팔을 그쪽으로 늘여 뻗음 (원래 칸은 그대로 두고 이어 붙임)
       for(const [x,y,c] of mv.sort((p,q)=>dx*(q[0]-p[0])))for(let k=1;k<=n;k++){const lift=side&&k===n?1:0;if(c.c==='g'||k<n)put(x+dx*k,y-lift,c);}}}
+  /* 먹기·마시기 팔: 원래 팔(소매→소맷부리→손) 칸 순서를 그대로 새 길로 옮겨 그려, 옷 색·명암·외곽선이 평소와 같게 */
+  let HND=null;
+  if(ARMP&&!back){const isH=c=>c&&c.arm&&c.c==='g';
+    /* 지운 팔 자리: 몸통 안쪽이면 옆 몸통 칸으로 메우고, 몸 바깥이면 비움 (몸이 옆으로 튀어나오지 않게) */
+    const bod=(x,y)=>x>=0&&x<16&&G[y][x]&&!G[y][x].arm&&'tbB'.includes(G[y][x].c);
+    const bodY=(x,y)=>y>=0&&y<32&&bod(x,y);const fillUnder=(x,y)=>{let l=null,r=null,u=null,dn=null;for(let d=1;d<6;d++){if(!l&&bod(x-d,y))l=G[y][x-d];if(!r&&bod(x+d,y))r=G[y][x+d];if(!u&&bodY(x,y-d))u=G[y-d][x];if(!dn&&bodY(x,y+d))dn=G[y+d][x];}const src=l&&r?(l.t>r.t?l:r):u&&dn?(u.c==='t'?u:dn):null;G[y][x]=src?{...src,arm:false}:null;
+      if(!src){/* 몸 가장자리가 된 칸은 외곽선으로 */for(const xx of [x-1,x+1])if(bod(xx,y)&&!(bod(xx-1,y)&&bod(xx+1,y)))G[y][xx]={...G[y][xx],t:0};}};
+    let sh0=-1;for(let y=0;y<32&&sh0<0;y++)if(G[y].some(c=>c&&c.c==='t'&&!c.arm))sh0=y;
+    let chinY=sh0-1;for(let y=sh0-1;y>0;y--)if(G[y].some(c=>c&&c.c==='s'&&!c.arm)){chinY=y;break;}
+    /* 옮길 팔: 정면은 화면 오른쪽 팔, 옆모습은 등 쪽 팔의 칸 순서를 빌려 몸 앞쪽에 그림 */
+    const clu=(f)=>{const R={};for(let y=0;y<32;y++)for(let x=0;x<16;x++){const c=G[y][x];if(c&&c.arm&&f(x))(R[y]=R[y]||[]).push([x,c]);}return R;};
+    const CR=clu(x=>x>=8),CL=clu(x=>x<8),src=side?CL:CR,ys=Object.keys(src).map(Number).sort((p,q)=>p-q);
+    if(ys.length>3){const keepY=side?99:ys[0]+3;
+      const seq=[];for(const y of ys){if(y<keepY&&!side)continue;const f=src[y].filter(([x,c])=>c.t>0).sort((p,q)=>side?p[0]-q[0]:q[0]-p[0]);if(f.length)seq.push(f.map(e=>e[1]));}
+      /* 지우기: 정면은 오른팔 아랫부분, 옆모습은 앞에 보이던 손 */
+      for(const y of ys)for(const [x] of src[y])if(!side&&y>=keepY)fillUnder(x,y);
+      if(side){for(const y in CR)for(const [x] of CR[y])fillUnder(x,+y);for(const y of ys)if(y>=ys[0]+3)for(const [x] of CL[y])fillUnder(x,y);}
+      let fx=-1;for(let y=0;y<sh0;y++)G[y].forEach((c,x)=>{if(c&&c.c==='s')fx=Math.max(fx,x);});
+      let E0,E1;
+      if(!side){const xa=Math.max(...src[ys[0]+2].map(e=>e[0]));E0=[xa-1,keepY];E1=ARMP==='am'?[9,chinY]:[xa-4,keepY+1];}
+      else{E0=[sh0>0?Math.min(fx-2,10):10,sh0+3];E1=ARMP==='am'?[fx,chinY]:[fx+1,sh0+4];}
+      const line=[];{let [x,y]=E0;const [x1,y1]=E1,dx=Math.abs(x1-x),dy=-Math.abs(y1-y),sx=x<x1?1:-1,sy=y<y1?1:-1;let er=dx+dy;for(let k=0;k<40;k++){line.push([x,y]);if(x===x1&&y===y1)break;const e2=2*er;if(e2>=dy){er+=dy;x+=sx;}if(e2<=dx){er+=dx;y+=sy;}}}
+      const nH=seq.filter(r=>r.some(isH)).length||1,sl=seq.filter(r=>!r.some(isH)),hr=seq.filter(r=>r.some(isH));
+      const kinds=[];const nS=Math.max(1,line.length-Math.min(nH,2));for(let i=0;i<nS;i++)kinds.push(sl.length?sl[Math.min(sl.length-1,Math.floor(i*sl.length/nS))]:hr[0]);
+      for(let i=0;kinds.length<line.length;i++)kinds.push(hr[Math.min(hr.length-1,i)]||kinds[kinds.length-1]);
+      const ST=new Map(),put=(x,y,c)=>{if(x>=0&&x<16&&y>=0&&y<32)ST.set(x+','+y,{...c,arm:true});};
+      line.forEach(([x,y],i)=>{const r=kinds[i];put(x,y,r[0]);if(r.some(isH)){put(x+(side?1:-1),y,r[1]||r[0]);}});
+      /* 외곽선: 새 팔 둘레 */
+      const OL=[];for(const k of ST.keys()){const [x,y]=k.split(',').map(Number);for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]]){const q=(x+ax)+','+(y+ay);if(!ST.has(q))OL.push([x+ax,y+ay,ST.get(k)]);}}
+      for(const [x,y,c] of OL)if(x>=0&&x<16&&y>=0&&y<32){const o=G[y][x];if(o&&o.c==='s'&&y<sh0&&!(ARMP==='am'))continue;G[y][x]={...c,t:0,arm:true};}
+      for(const [k,c] of ST){const [x,y]=k.split(',').map(Number);G[y][x]=c;}
+      const L1=line[line.length-1];HND=[L1[0]+(side?1:0),L1[1]];}}
   /* 눈 깜빡임: 눈동자·흰자 → 피부, 맨 아랫줄은 속눈썹 */
   if(fk==='bl'){let ly=-1;for(let y=0;y<32;y++)for(const c of G[y])if(c&&(c.c==='i'||c.c==='e'))ly=y;
     for(let y=0;y<32;y++)for(const c of G[y])if(c&&(c.c==='i'||c.c==='e'||(c.c==='l'&&y<ly))){if(y===ly&&c.c!=='l'){c.c='l';c.t=0;}else{c.c='s';c.t=c.bt=15;}}}
@@ -3497,13 +3530,13 @@ function spr2(id,dir,fk){
     if(s0>=0&&WEAR.btn){for(let y=s0+2;y<s0+8;y+=2){px(side?cx:cx-1,y,WEAR.btn);}}}   // 단추
   {const H=R.hair,HC=[mix(H.o,H.d,.45),H.d,H.b,mix(H.b,H.l,.5),H.l,mix(H.l,'#ffffff',.25),mix(H.l,'#ffffff',.5)].map(rgb);
     for(let i=0;i<512;i++){if(P.z[i]!==HZ2||HL[i]<0||P.ov[i])continue;const c=HC[HL[i]];d[i*4]=c[0];d[i*4+1]=c[1];d[i*4+2]=c[2];d[i*4+3]=255;}}
-  g.putImageData(im,0,0);cv.chest=sit?null:fem?[sh+2,4]:[sh+1,8];cv.eyeY=eyeY;
+  g.putImageData(im,0,0);cv.chest=sit?null:fem?[sh+2,4]:[sh+1,8];cv.eyeY=eyeY;cv.hand=HND;cv.armp=ARMP;
   const adult=!fem&&!kid,la=tall&&ft>hip+3?(LEG_ADD[id]!=null?LEG_ADD[id]:LEG_M):0,ta=adult&&hip>sh+2?TORSO_M:0;   // 앉아도 상체는 같이 늘림
   if(la>0||ta>0){   // 키 늘이기: 상체(어깨~엉덩이)·다리(엉덩이~발) 줄을 고르게 복제. 손이 있는 줄은 피해서 손 모양 유지
     const hand=y=>G[y].some(c=>c&&c.c==='g'),pick=(a,b,n)=>{const ok=[];for(let y=a;y<=b;y++)if(!hand(y))ok.push(y);const r={};for(let k=0;k<n&&ok.length;k++){const y=ok[Math.floor((k+.5)*ok.length/n)];r[y]=(r[y]||0)+1;}return r;};
     const D=Object.assign({},pick(sh+1,hip-2,ta));for(const [y,c] of Object.entries(pick(hip+1,ft-2,la)))D[y]=(D[y]||0)+c;
     const rows=[];for(let y=0;y<32;y++){rows.push(y);for(let k=0;k<(D[y]||0);k++)rows.push(y);}
-    const c2=mk(16,rows.length),g2=c2.getContext('2d');rows.forEach((y,i)=>g2.drawImage(cv,0,y,16,1,0,i,16,1));c2.chest=cv.chest;c2.eyeY=cv.eyeY;return SP2C[key]=gsN?gsLong(c2,gsN,gsX):c2;}
+    const c2=mk(16,rows.length),g2=c2.getContext('2d');rows.forEach((y,i)=>g2.drawImage(cv,0,y,16,1,0,i,16,1));c2.chest=cv.chest;c2.eyeY=cv.eyeY;if(HND)c2.hand=[HND[0],rows.indexOf(HND[1])];c2.armp=ARMP;return SP2C[key]=gsN?gsLong(c2,gsN,gsX):c2;}
   return SP2C[key]=gsN?gsLong(cv,gsN,gsX):cv;   // 숨쉬기용 가슴 영역 (NPC.cs: 남 y17 h8 / 여 y18 h4)
 }
 /* 어떤 프레임을 그릴지: 이동 중엔 걷기/달리기, 서 있으면 숨쉬기와 가끔 깜빡임 */
@@ -4032,7 +4065,7 @@ function draw(t){
     if(e.n&&e.n.pose==='read'&&e.n.dir!==1){const bx=sx+(e.n.dir===2?-7:e.n.dir===3?3:-2),by=sy-11;ctx.fillStyle='#7a2c3a';ctx.fillRect(bx,by,5,4);ctx.fillStyle='#f4efe4';ctx.fillRect(bx+1,by+1,3,2);}
     if(e.n&&e.n.pose==='read'&&e.n.dir===1&&Math.floor(t/900)%2){ctx.fillStyle='#f4efe4';ctx.fillRect(sx-1,sy-34,3,2);}
     if(!e.n&&S.carry)drawCarry(sx,sy,P.dir,S.carry);
-    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&!e.actArt&&(!tk||ps==='write')){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
+    {const ps=e.n?e.n.pose:e.pl?P.pose:null,sd_=e.n&&e.n.act&&e.n.act[e.n.spot]&&e.n.pose===e.n.act[e.n.spot][3]?e.n.act[e.n.spot][2]:null,tk=e.n&&((e.n.wdir!=null&&e.n.dir!==e.n.wdir)||(sd_!=null&&e.n.dir!==sd_&&ps!=='tea'));if(ps&&POSEFX[ps]&&!e.actArt&&(!tk||ps==='write'||((ps==='tea'||ps==='drink')&&e.sp.hand))){const q=[ps,sx,sy,tk?(e.n.wdir!=null?e.n.wdir:sd_):e.n?e.n.dir:P.dir,e.n?ALL_IDS.indexOf(e.n.id)+1:0,tk?{sp:e.sp,docOnly:1}:e];if(ps==='write'&&q[3]===0){q.wy=e.y+18;WFX.push(q);WFX.sort((a,b)=>a.wy-b.wy);}else FXQ.push(q);}}
     if(SCENE&&SCENE.emo&&performance.now()-SCENE.emo.t<1600&&((e.n&&SCENE.emo.id===e.n.id)||(!e.n&&SCENE.emo.id==='me'))){drawEmote(sx,sy+(e.n&&CH[e.n.id].small?6:0),SCENE.emo.ch,t);continue;}
     if(e.n&&SCENE)continue;
     if(e.n){const by=sy-(CH[e.n.id].small||e.n.id==='peter'?28:38)+Math.round(Math.sin(t/300)*1),id=e.n.id;
