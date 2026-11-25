@@ -107,19 +107,19 @@ Object.assign(POSEFX,{
 
 /* ── 앉기: 진짜 의자에서만 · 한 의자에 한 명 ── */
 const SEATK2=new Set(['chair','bench','stool','armchair','sofa']);
-function seatAt(a,x,y){if(!a.map[y])return null;if(a.map[y][x]==='Y')return {k:'Y'};const o=objAt(a,x,y);return o&&SEATK2.has(o.k)?o:null;}
+function seatTile(a,x,y){if(!a.map[y])return null;if(a.map[y][x]==='Y')return {k:'Y'};const o=objAt(a,x,y);return o&&SEATK2.has(o.k)?o:null;}
 function seatDir(a,o,x,y){if(o&&o.d!=null)return o.d;let best=null,bd=9;for(const t of a.objs){if(!['table','desk','fireplace','piano'].includes(t.k))continue;const cx=t.x+t.w/2-.5,cy=t.y+t.h/2-.5,dd=Math.hypot(cx-x,cy-y);if(dd<bd){bd=dd;best=Math.abs(cx-x)>Math.abs(cy-y)?(cx<x?2:3):(cy<y?1:0);}}return best;}
 function findSeat(a,x,y,taken){const rm=roomAt?roomAt(x,y):null;let best=null,bd=99;
-  for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const xx=x+dx,yy=y+dy,o=seatAt(a,xx,yy);if(!o)continue;if(taken&&taken(xx,yy))continue;const d=Math.abs(dx)+Math.abs(dy);if(d<bd){bd=d;best=[xx,yy,o];}}return best;}
+  for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const xx=x+dx,yy=y+dy,o=seatTile(a,xx,yy);if(!o)continue;if(taken&&taken(xx,yy))continue;const d=Math.abs(dx)+Math.abs(dy);if(d<bd){bd=d;best=[xx,yy,o];}}return best;}
 /* 불러올 때: 의자 없는 앉기 자리 → 가까운 의자로 옮기거나 서 있기로 */
 (function(){let moved=0,stood=0;for(const [k,v] of Object.entries(ACTS)){if(!Array.isArray(v))continue;const a=AREAS[ACTS_AREA[k]];if(!a||!a.map)continue;const sv=A;A=a;
-  for(const s of v){if(s[3]!=='sit'&&s[3]!=='tea')continue;if(seatAt(a,s[0],s[1]))continue;const f=findSeat(a,s[0],s[1]);
+  for(const s of v){if(s[3]!=='sit'&&s[3]!=='tea')continue;if(seatTile(a,s[0],s[1]))continue;const f=findSeat(a,s[0],s[1]);
     if(f&&Math.abs(f[0]-s[0])+Math.abs(f[1]-s[1])<=3){s[0]=f[0];s[1]=f[1];const d=seatDir(a,f[2].k==='Y'?null:f[2],f[0],f[1]);if(d!=null)s[2]=d;moved++;}else{s[3]='stand';stood++;}}A=sv;}
   window.SEATFIX=[moved,stood];})();
 /* 도착할 때: 그 의자에 이미 누가 앉아 있으면 빈 의자로, 없으면 옆에 서기 */
 {const _ar=arrive;arrive=function(n){_ar(n);if(n.pose!=='sit'&&n.pose!=='tea')return;const a=AREAS[n.area];if(!a)return;const [tx,ty]=tileOf(n);
   const taken=(x,y)=>npcs.some(m=>m!==n&&m.area===n.area&&!m.hidden&&['sit','tea','write'].includes(m.pose)&&tileOf(m)[0]===x&&tileOf(m)[1]===y);
-  if(seatAt(a,tx,ty)&&!taken(tx,ty))return;const f=findSeat(a,tx,ty,taken);
+  if(seatTile(a,tx,ty)&&!taken(tx,ty))return;const f=findSeat(a,tx,ty,taken);
   if(f&&Math.abs(f[0]-tx)+Math.abs(f[1]-ty)<=4){n.x=f[0]*T+8;n.y=f[1]*T+14;const d=seatDir(a,f[2].k==='Y'?null:f[2],f[0],f[1]);if(d!=null)n.dir=d;}else n.pose='stand';};}
 /* 플레이어도 의자 없는 곳에서 «앉기» 금지 (P.pose sit 은 의자에서만 시작되므로 그대로) */
 

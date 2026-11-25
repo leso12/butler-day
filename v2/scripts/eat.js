@@ -49,3 +49,6 @@ setInterval(()=>{try{if(!S||!npcs)return;for(const n of npcs){if(n.scene||n.hidd
   if(P.pose==='tea'){SCENE.item=roomItem(rm)||'tea';return;}
   if(rm&&/tavern|tav_t/.test(rm)&&!P.pose){SCENE.item='beer';SCENE.drinkers=[];P.pose='drink';for(const id of SCENE.cast||[]){const n=npcs.find(m=>m.id===id);if(n&&n.pose==='stand'){n.pose='drink';SCENE.drinkers.push(n);}}}};}
 {const _es=endScene;endScene=function(){const sc=SCENE;if(sc&&sc.drinkers){for(const n of sc.drinkers)if(n.pose==='drink')n.pose='stand';if(P.pose==='drink')P.pose=null;}return _es.apply(this,arguments);};}
+/* 서 있는 자리가 가구·노점 밑이 되어 버렸으면(꾸미기·지도 수정 뒤에도) 가장 가까운 빈칸에 선다 */
+{const _ar=arrive;arrive=function(n){_ar(n);try{if(['sit','tea','write','sleep','bed'].includes(n.pose)||n.hidden)return;const a=AREAS[n.area];if(!a)return;const [x,y]=tileOf(n);if(!solidIn(a,x,y))return;
+  for(let r=1;r<=3;r++)for(const [dx,dy] of [[0,1],[1,0],[-1,0],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){const X=x+dx*r,Y=y+dy*r;if(!solidIn(a,X,Y)&&!doorAt(a,X,Y)){n.x=X*T+8;n.y=Y*T+14;return;}}}catch(e){}};}

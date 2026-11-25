@@ -3615,6 +3615,12 @@ function pathIn(a,[sx,sy],[tx,ty]){
 }
 function curEntry(id){const h=S.min/60,sc=schedFor(id);let k=sc[0];for(const v of sc)if(h>=v[0])k=v;return k;}
 function arrive(n){const sp=n.act[n.spot]||n.act[0];n.dir=sp[2];n.pose=sp[3];n.dwell=sp[4]*(.7+Math.random()*.6);if(n.hideOn||sp[3]==='sleep')n.hidden=true;}
+/* 자리 고르기: 다른 NPC가 서 있거나 가는 중인 칸은 피함. 다 찼으면(서 있는 자리) 옆 빈칸을 개인 자리로 */
+function spotTaken(n,x,y){for(const m of npcs){if(m===n||m.hidden||m.area!==(LOC_AREA[n.loc]||n.area))continue;const t=m.act&&m.act[m.spot];if(t&&t[0]===x&&t[1]===y)return true;const [mx,my]=tileOf(m);if(mx===x&&my===y)return true;}return false;}
+function pickSpot(n,move){const L=n.act;if(!L||!L.length)return 0;const free=[];for(let k=0;k<L.length;k++){if(move&&k===n.spot)continue;if(!spotTaken(n,L[k][0],L[k][1]))free.push(k);}
+  if(free.length)return free[Math.floor(Math.random()*free.length)];if(move)return n.spot;
+  const s0=L[0],a=AREAS[LOC_AREA[n.loc]||n.area];if(a&&!['sit','tea','write','sleep','bed'].includes(s0[3]))for(let r=1;r<=2;r++)for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]]){const x=s0[0]+dx*r,y=s0[1]+dy*r;if(!solidIn(a,x,y)&&!doorAt(a,x,y)&&!spotTaken(n,x,y)){n.act=L.concat([[x,y,s0[2],s0[3],s0[4]]]);return n.act.length-1;}}
+  return 0;}
 function warp(n){const sp=n.act[n.spot]||n.act[0];n.area=LOC_AREA[n.loc]||'castle';n.x=sp[0]*T+8;n.y=sp[1]*T+14;n.path=[];n.door=null;arrive(n);}
 function retarget(n){
   const ta=LOC_AREA[n.loc]||'castle',sp=n.act[n.spot]||n.act[0];
@@ -3626,7 +3632,7 @@ function placeNpcs(force){
   if(force){applySeason(dateOf(S.day).season);if(S.forageDay!==S.day)rollForage();}
   schedSync();
   for(const n of npcs){if(n.scene)continue;const e=curEntry(n.id),key=e.join('|');
-    if(key!==n.cur||force){n.cur=key;n.loc=e[1];n.act=ACTS[e[2]]||[[1,1,0,'stand',99]];n.spot=0;n.pose='stand';n.hideOn=e[3]==='hide';n.hidden=false;
+    if(key!==n.cur||force){n.cur=key;n.loc=e[1];n.act=ACTS[e[2]]||[[1,1,0,'stand',99]];n.spot=0;n.spot=pickSpot(n,false);n.pose='stand';n.hideOn=e[3]==='hide';n.hidden=false;
       if(force)warp(n);else{n.dwell=0;retarget(n);}}}
 }
 function updateNpcs(dt){
@@ -3644,7 +3650,7 @@ function updateNpcs(dt){
       n.anim+=dt*(n.area===S.area?1:3);n.moving=!!n.path.length;
     }else{
       n.frame=0;n.moving=false;n.dwell-=dt;
-      if(n.dwell<=0&&n.act.length>1&&!n.hidden){let k;do k=Math.floor(Math.random()*n.act.length);while(k===n.spot);
+      if(n.dwell<=0&&n.act.length>1&&!n.hidden){const k=pickSpot(n,true);if(k===n.spot){n.dwell=3+Math.random()*4;continue;}
         n.spot=k;const sp=n.act[k];n.path=pathIn(AREAS[n.area],tileOf(n),[sp[0],sp[1]])||[];if(!n.path.length)arrive(n);}
     }
   }
@@ -3876,7 +3882,7 @@ function applyDatePose(){const dp=PEND_POSE;PEND_POSE=null;if(!dp||!SCENE)return
     n.area=S.area;P.dir=n.x>P.x?3:2;n.dir=n.x>P.x?2:3;P.pose='tea';n.pose='tea';SCENE.table={x:(P.x+n.x)/2,y:P.y-4};}
   else if(dp.pose==='hold'){if(free(P.x+14,P.y)){n.x=P.x+14;n.y=P.y;}else if(free(P.x-14,P.y)){n.x=P.x-14;n.y=P.y;}n.area=S.area;P.dir=0;n.dir=0;SCENE.hold=n.id;}
   else if(dp.pose==='cook'){if(free(P.x+14,P.y)){n.x=P.x+14;n.y=P.y;}n.area=S.area;P.dir=1;n.dir=1;P.pose='cook';n.pose='cook';}}
-function deskWork(after){P.pose='write';P.dir=1;busy=true;setTimeout(()=>{P.pose=null;busy=false;after();},1800);}   // 책상에서 서류 쓰는 모습을 잠깐 보여 준 뒤 진행
+function deskAnim(after){P.pose='write';P.dir=1;busy=true;setTimeout(()=>{P.pose=null;busy=false;after();},1800);}   // 책상에서 서류 쓰는 모습을 잠깐 보여 준 뒤 진행
 function endScene(){CUE.mv.length=0;CUE.wt=0;P.kneel=false;if(P.pose==='kneel')P.pose=null;for(const n of npcs){if(n.kneel){n.kneel=false;n.pose='stand';}n.cueMv=false;}
   if(SCENE&&SCENE.extra)for(const n of SCENE.extra){n.scene=false;n.cur='';}
   if(P.pose&&P.pose!=='bed'&&P.pose!=='sit')P.pose=null;if(!SCENE)return;for(const id of SCENE.cast){const n=npcs.find(n=>n.id===id);if(n){n.scene=false;n.cur='';if(['tea','cook'].includes(n.pose))n.pose='stand';}}SCENE=null;$('#app').classList.remove('scene');}
@@ -4967,11 +4973,11 @@ function paperLines(n){const pool=PAPER_LINES.slice().sort(()=>Math.random()-.5)
 function deskWork(){
   if(S.carry)return startDialog(null,[R_('들고 있는 것부터 처리하자.')]);
   if(task('papers')){if(!spend('papers'))return;
-    return deskWork(()=>blackScene([R_('— 서류 검토 —'),...paperLines(3),R_(['오늘도 열심히 했다.','마지막 장을 덮자 어깨가 뻐근했다.','깔끔하게 정리했다. 내일의 나에게 칭찬을.'][Math.floor(Math.random()*3)])],()=>finishTask('papers',.55+Math.random()*.45)));}
+    return deskAnim(()=>blackScene([R_('— 서류 검토 —'),...paperLines(3),R_(['오늘도 열심히 했다.','마지막 장을 덮자 어깨가 뻐근했다.','깔끔하게 정리했다. 내일의 나에게 칭찬을.'][Math.floor(Math.random()*3)])],()=>finishTask('papers',.55+Math.random()*.45)));}
   const done=(S.paperDay===S.day),unread=S.mail.filter(m=>!m.read).length,opts=[];
   opts.push({t:done?'추가 서류 보기 (오늘은 했다)':'추가 서류 보기 (1시간 · 체력 −5 · 평판 +1)',act:()=>{if(done)return;if(S.hp<5)return startDialog(null,[R_('눈이 감긴다. 오늘은 무리다.')]);
       S.paperDay=S.day;S.hp-=5;S.min=Math.min(holdNow()?S.min:1430,S.min+60);S.rep=Math.min(100,S.rep+1);diaryAdd('note','밤에 추가 서류를 봤다.');
-      deskWork(()=>blackScene([R_('— 서류 —'),...paperLines(2),R_('오늘도 열심히 했다. (1시간이 흘렀다)')],()=>{timeSkip();hud();}));}});
+      deskAnim(()=>blackScene([R_('— 서류 —'),...paperLines(2),R_('오늘도 열심히 했다. (1시간이 흘렀다)')],()=>{timeSkip();hud();}));}});
   if(S.mail.length)opts.push({t:`편지함 (${unread?'안 읽은 편지 '+unread+'통':'모두 읽음'})`,act:()=>togglePanel('menu','mail')});
   if(!S.f.public)opts.push({t:S.deskDay===S.day?'붕대와 옷매무새 점검 (오늘은 했다)':'붕대와 옷매무새 점검 (20분)',act:()=>{if(S.deskDay===S.day)return;S.deskDay=S.day;S.min+=20;addSus(-4);startDialog(null,[R_('거울 앞에서 붕대를 단단히 고쳐 매고, 목소리를 낮게 가다듬었다. 「…에렌입니다.」 좋아.')]);}});
   opts.push({t:'그만둔다'});
